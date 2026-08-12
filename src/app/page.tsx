@@ -227,7 +227,9 @@ export default function BristhWorkspace() {
           <DocumentEditorView taskId={copilotView.taskId} agent={copilotView.agent} onClose={() => setCopilotView(null)} />
         )}
         <div key="main-tabs" style={{ display: copilotView ? 'none' : 'contents' }}>
-          {activeTab === 'office' && <VirtualOfficeView onOpenPptCopilot={(data) => { setPendingPptData(data); setActiveTab('toolbox'); }} onOpenDocCopilot={(data) => setCopilotView(data)} />}
+          <div style={{ display: activeTab === 'office' ? 'contents' : 'none' }}>
+            <VirtualOfficeView onOpenPptCopilot={(data) => { setPendingPptData(data); setActiveTab('toolbox'); }} onOpenDocCopilot={(data) => setCopilotView(data)} />
+          </div>
           {activeTab === 'history' && <TaskHistoryView onOpenPptCopilot={(data) => { setPendingPptData(data); setActiveTab('toolbox'); }} onOpenDocCopilot={(data) => setCopilotView(data)} />}
           {activeTab === 'kb' && <KnowledgeBaseView />}
           {activeTab === 'settings' && <AISettingsView />}

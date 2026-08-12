@@ -90,14 +90,9 @@ export async function renderPPTX(options: RenderPPTXOptions): Promise<{ fileUrl:
     });
   });
 
-  // Ensure downloads directory exists
-  const downloadsDir = path.join(process.cwd(), 'public', 'downloads');
-  await fs.mkdir(downloadsDir, { recursive: true });
-
   const fileName = `PPT_${Date.now()}.pptx`;
-  const filePath = path.join(downloadsDir, fileName);
-  const buffer = await pptx.write({ outputType: 'nodebuffer' }) as Buffer;
-  await fs.writeFile(filePath, buffer);
+  const base64 = await pptx.write({ outputType: 'base64' }) as string;
+  const dataUri = `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${base64}`;
 
-  return { fileUrl: `/downloads/${fileName}`, fileName };
+  return { fileUrl: dataUri, fileName };
 }
