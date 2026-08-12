@@ -1,0 +1,144 @@
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
+import nodemailer from 'nodemailer';
+import path from 'path';
+import { marked } from 'marked';
+import { buildAgentPrompt } from '@/lib/bristh-config';
+
+
+export async function POST(req: Request) {
+  let taskIdForError = '';
+  try {
+    const { taskId } = await req.json();
+    taskIdForError = taskId;
+
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: { context: true }
+    });
+
+    if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+
+    await prisma.task.update({
+      where: { id: taskId },
+      data: { status: 'RUNNING' }
+    });
+
+    const fallbackPersona = 'You are Grace, the Email Dispatch Specialist at Bristh Enrollment Partners. Compose and send professional emails with attachments.';
+    
+    const systemPrompt = await buildAgentPrompt('grace', task.instruction, task.context.rawContent, fallbackPersona)
+      + `\n\nExtract email details. Output ONLY a valid JSON object:
+{
+  "to": "recipient email. If none stated, use 'haoz214@gmail.com'",
+  "subject": "Professional email subject",
+  "htmlBody": "HTML formatted body. Professional, well-spaced, polite. Mention any attachments."
+}`;
+
+    const { client, config } = await getModelClient();
+    const response = await client.chat.completions.create(
+      buildCompletionParams(config, [{ role: 'system', content: systemPrompt }], { requireJson: true })
+    );
+
+    let rawJson = response.choices[0].message.content || '{}';
+    rawJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsedEmail = JSON.parse(rawJson);
+
+    const siblingTasks = await prisma.task.findMany({
+      where: { 
+        contextId: task.contextId,
+        id: { not: taskId },
+        status: 'COMPLETED'
+      }
+    });
+
+    const mailAttachments: any[] = [];
+    for (const sibling of siblingTasks) {
+       if (!sibling.resultPayload) continue;
+       
+       if (sibling.agent === 'Edda') {
+         try {
+           const payload = JSON.parse(sibling.resultPayload);
+           if (payload.fileUrl) {
+              const filePath = path.join(process.cwd(), 'public', payload.fileUrl);
+              mailAttachments.push({
+                 filename: `${sibling.agent}_Presentation.pptx`,
+                 path: filePath
+              });
+           }
+         } catch(e) {}
+       } else if (sibling.agent === 'Bob') {
+         try {
+           const payload = JSON.parse(sibling.resultPayload);
+           if (payload.icsContent) {
+              mailAttachments.push({
+                 filename: 'Meeting_Invite.ics',
+                 content: payload.icsContent
+              });
+           }
+         } catch(e) {}
+       } else {
+         // Markdown agents: Alice, Eric, David, Fiona
+         let mdContent = sibling.resultPayload;
+         try {
+           const parsed = JSON.parse(sibling.resultPayload);
+           mdContent = parsed.content || mdContent;
+         } catch(e) {}
+         
+         const htmlBody = marked(mdContent) as string;
+         const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.6;color:#333}h1{font-size:20pt;font-weight:bold}h2{font-size:16pt;font-weight:bold}h3{font-size:14pt;font-weight:bold}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px}</style></head><body>${htmlBody}</body></html>`;
+         
+         mailAttachments.push({
+            filename: `${sibling.agent}_Document.doc`,
+            content: wordHtml,
+            contentType: 'application/msword'
+         });
+       }
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.IMAP_USER,
+        pass: process.env.IMAP_PASSWORD,
+      }
+    });
+
+    const toEmail = parsedEmail.to && parsedEmail.to.includes('@') ? parsedEmail.to : 'haoz214@gmail.com';
+
+    await transporter.sendMail({
+      from: `"Bristh Enrollment Partners" <${process.env.IMAP_USER}>`,
+      to: toEmail,
+      subject: parsedEmail.subject,
+      html: parsedEmail.htmlBody,
+      attachments: mailAttachments
+    });
+
+    const resultContent = `### 邮件发送成功 ✅\n\n**收件人**: ${toEmail}\n**主题**: ${parsedEmail.subject}\n\n**正文内容预览**:\n${parsedEmail.htmlBody.replace(/<[^>]+>/g, '')}`;
+
+    const resultPayload = JSON.stringify({
+      summary: `📧 邮件已发送至 ${toEmail}：${parsedEmail.subject}`,
+      content: resultContent
+    });
+
+    // 4. Save output payload and mark as COMPLETED
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: { 
+        status: 'COMPLETED',
+        resultPayload
+      }
+    });
+
+    return NextResponse.json({ success: true, task: updatedTask });
+  } catch (error: any) {
+    console.error('Grace agent error:', error);
+    if (taskIdForError) {
+      await prisma.task.update({
+        where: { id: taskIdForError },
+        data: { status: 'FAILED' }
+      }).catch(console.error);
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

@@ -1,0 +1,345 @@
+
+> my-ai@0.1.0 dev
+> next dev -p 5859
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:5859
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 958ms
+ ✓ Compiled /api/chat/external in 85ms (29 modules)
+ POST /api/chat/external?lang=zh 200 in 3564ms
+[Tool: searchKnowledgeBase] Querying for: 开学日期
+ POST /api/chat/external?lang=zh 200 in 4726ms
+ ○ Compiling / ...
+ ✓ Compiled / in 939ms (701 modules)
+ GET / 200 in 1059ms
+ ✓ Compiled in 107ms (357 modules)
+ ✓ Compiled /_not-found in 215ms (690 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 250ms
+ ✓ Compiled in 168ms (357 modules)
+ ✓ Compiled in 87ms (357 modules)
+ ○ Compiling /chat/external ...
+ ✓ Compiled /internal in 1950ms (3545 modules)
+ ✓ Compiled /internal/kb in 334ms (3562 modules)
+ ✓ Compiled /internal/secretary in 207ms (3572 modules)
+ ✓ Compiled /internal/ai-manage in 204ms (3590 modules)
+ ✓ Compiled /api/admin/characters in 108ms (1847 modules)
+ GET /api/admin/characters 200 in 137ms
+ GET /api/admin/characters 200 in 3ms
+ ✓ Compiled /api/characters/reload in 137ms (414 modules)
+ POST /api/characters/reload 200 in 173ms
+ GET /internal/ai-manage 200 in 72ms
+ ✓ Compiled /api/admin/characters in 105ms (416 modules)
+ GET /api/admin/characters 200 in 124ms
+ GET /api/admin/characters 200 in 2ms
+ ✓ Compiled /api/characters/[id]/context in 54ms (418 modules)
+ ✓ Compiled (420 modules)
+ GET /api/characters/admissions_ai/assets 200 in 287ms
+ GET /api/characters/admissions_ai/context 200 in 287ms
+ ○ Compiling /chat/external ...
+ ✓ Compiled /chat/external in 640ms (1796 modules)
+ ✓ Compiled in 501ms (3586 modules)
+ ✓ Compiled in 119ms (1790 modules)
+ ✓ Compiled /internal in 181ms (1808 modules)
+ ✓ Compiled /api/admin/characters in 109ms (1841 modules)
+ GET /api/admin/characters 200 in 140ms
+ GET /api/admin/characters 200 in 2ms
+ ✓ Compiled /api/characters/[id]/context in 139ms (1843 modules)
+ ✓ Compiled (1845 modules)
+ GET /api/characters/admissions_ai/context 200 in 228ms
+ GET /api/characters/admissions_ai/assets 200 in 230ms
+ ○ Compiling /agency ...
+ ✓ Compiled /agency in 606ms (3607 modules)
+ ✓ Compiled /api/chat/external in 311ms (1811 modules)
+[Tool: searchKnowledgeBase] Querying for: 学校历史
+ POST /api/chat/external?lang=zh 200 in 6715ms
+[Tool: searchKnowledgeBase] Querying for: A Level入学要求 注册费 押金
+ POST /api/chat/external?lang=zh 200 in 7938ms
+ POST /api/chat/external?lang=zh 200 in 8816ms
+ ✓ Compiled in 467ms (3614 modules)
+ POST /api/chat/external?lang=zh 200 in 15434ms
+Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead.
+ GET /chat/external 200 in 186ms
+ POST /api/chat/external?lang=zh 200 in 8031ms
+ ✓ Compiled in 545ms (3605 modules)
+ ✓ Compiled in 98ms (1800 modules)
+ ✓ Compiled in 112ms (3591 modules)
+ ✓ Compiled in 103ms (1800 modules)
+ ✓ Compiled in 88ms (1800 modules)
+ ✓ Compiled in 110ms (1800 modules)
+ ✓ Compiled /chat/agency in 369ms (3597 modules)
+ ✓ Compiled in 308ms (3607 modules)
+ ✓ Compiled /chat/agency in 98ms (1809 modules)
+Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead.
+ GET /chat/agency 200 in 200ms
+ ✓ Compiled in 740ms (3601 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead.
+ GET /chat/agency 200 in 107ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 332ms (3603 modules)
+Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead.
+ GET /chat/agency 200 in 251ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 257ms (3603 modules)
+Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead.
+ GET /chat/agency 200 in 168ms
+ ✓ Compiled in 191ms (3603 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead.
+ GET /chat/agency 200 in 29ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 253ms (3603 modules)
+Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead.
+ GET /chat/agency 200 in 169ms
+ ✓ Compiled in 312ms (3603 modules)
+ ✓ Compiled in 418ms (3603 modules)
+ ✓ Compiled in 121ms (1803 modules)
+ ✓ Compiled in 118ms (1803 modules)
+ ✓ Compiled in 134ms (1803 modules)
+ ✓ Compiled /internal/crm in 408ms (3607 modules)
+ ✓ Compiled /internal/ai-tasks in 156ms (3610 modules)
+ ✓ Compiled in 553ms (3597 modules)
+ ✓ Compiled in 566ms (3620 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /internal 200 in 54ms
+ ✓ Compiled in 497ms (3620 modules)
+ ✓ Compiled in 219ms (3620 modules)
+ ✓ Compiled in 205ms (3620 modules)
+ ✓ Compiled in 186ms (3618 modules)
+ GET /internal 200 in 81ms
+ GET /internal 200 in 27ms
+ GET /internal 200 in 26ms
+ ✓ Compiled in 429ms (3618 modules)
+ ✓ Compiled in 436ms (3618 modules)
+ ✓ Compiled in 204ms (3618 modules)
+ GET /internal/ai-tasks 200 in 141ms
+ ✓ Compiled in 470ms (3618 modules)
+ ✓ Compiled in 399ms (3618 modules)
+ ✓ Compiled /api/tasks/analyze-leads in 190ms (1813 modules)
+ POST /api/tasks/analyze-leads 200 in 7090ms
+ ✓ Compiled in 348ms (3618 modules)
+ ✓ Compiled in 502ms (3622 modules)
+ ✓ Compiled in 491ms (3608 modules)
+ ✓ Compiled in 140ms (1810 modules)
+ ✓ Compiled in 281ms (3622 modules)
+ ✓ Compiled in 315ms (3611 modules)
+ GET /internal/crm 200 in 85ms
+ ✓ Compiled /internal/crm/[id] in 403ms (3627 modules)
+ ⨯ src/app/internal/crm/[id]/page.tsx (90:16) @ Database
+ ⨯ ReferenceError: Database is not defined
+    at CRMDetailPage (./src/app/internal/crm/[id]/page.tsx:281:121)
+digest: "378919616"
+[0m [90m 88 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"[39m[33m>[39m[0m
+[0m [90m 89 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-5 border-b border-gray-50 flex items-center gap-2"[39m[33m>[39m[0m
+[0m[31m[1m>[22m[39m[90m 90 |[39m               [33m<[39m[33mDatabase[39m className[33m=[39m[32m"w-5 h-5 text-gray-400"[39m [33m/[39m[33m>[39m[0m
+[0m [90m    |[39m                [31m[1m^[22m[39m[0m
+[0m [90m 91 |[39m               [33m<[39m[33mh2[39m className[33m=[39m[32m"text-base font-bold text-[#141b38]"[39m[33m>[39m结构化背景档案 ([33mRaw[39m [33mData[39m)[33m<[39m[33m/[39m[33mh2[39m[33m>[39m[0m
+[0m [90m 92 |[39m             [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 93 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-6"[39m[33m>[39m[0m
+ ⨯ src/app/internal/crm/[id]/page.tsx (90:16) @ Database
+ ⨯ ReferenceError: Database is not defined
+    at CRMDetailPage (./src/app/internal/crm/[id]/page.tsx:281:121)
+digest: "378919616"
+[0m [90m 88 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"[39m[33m>[39m[0m
+[0m [90m 89 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-5 border-b border-gray-50 flex items-center gap-2"[39m[33m>[39m[0m
+[0m[31m[1m>[22m[39m[90m 90 |[39m               [33m<[39m[33mDatabase[39m className[33m=[39m[32m"w-5 h-5 text-gray-400"[39m [33m/[39m[33m>[39m[0m
+[0m [90m    |[39m                [31m[1m^[22m[39m[0m
+[0m [90m 91 |[39m               [33m<[39m[33mh2[39m className[33m=[39m[32m"text-base font-bold text-[#141b38]"[39m[33m>[39m结构化背景档案 ([33mRaw[39m [33mData[39m)[33m<[39m[33m/[39m[33mh2[39m[33m>[39m[0m
+[0m [90m 92 |[39m             [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 93 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-6"[39m[33m>[39m[0m
+ ⨯ src/app/internal/crm/[id]/page.tsx (90:16) @ Database
+ ⨯ ReferenceError: Database is not defined
+    at CRMDetailPage (./src/app/internal/crm/[id]/page.tsx:281:121)
+digest: "378919616"
+[0m [90m 88 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"[39m[33m>[39m[0m
+[0m [90m 89 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-5 border-b border-gray-50 flex items-center gap-2"[39m[33m>[39m[0m
+[0m[31m[1m>[22m[39m[90m 90 |[39m               [33m<[39m[33mDatabase[39m className[33m=[39m[32m"w-5 h-5 text-gray-400"[39m [33m/[39m[33m>[39m[0m
+[0m [90m    |[39m                [31m[1m^[22m[39m[0m
+[0m [90m 91 |[39m               [33m<[39m[33mh2[39m className[33m=[39m[32m"text-base font-bold text-[#141b38]"[39m[33m>[39m结构化背景档案 ([33mRaw[39m [33mData[39m)[33m<[39m[33m/[39m[33mh2[39m[33m>[39m[0m
+[0m [90m 92 |[39m             [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 93 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-6"[39m[33m>[39m[0m
+ GET /internal/crm/cmsltwztl0004spah73hya8it 500 in 69ms
+ ⨯ src/app/internal/crm/[id]/page.tsx (90:16) @ Database
+ ⨯ ReferenceError: Database is not defined
+    at CRMDetailPage (./src/app/internal/crm/[id]/page.tsx:281:121)
+digest: "378919616"
+[0m [90m 88 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"[39m[33m>[39m[0m
+[0m [90m 89 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-5 border-b border-gray-50 flex items-center gap-2"[39m[33m>[39m[0m
+[0m[31m[1m>[22m[39m[90m 90 |[39m               [33m<[39m[33mDatabase[39m className[33m=[39m[32m"w-5 h-5 text-gray-400"[39m [33m/[39m[33m>[39m[0m
+[0m [90m    |[39m                [31m[1m^[22m[39m[0m
+[0m [90m 91 |[39m               [33m<[39m[33mh2[39m className[33m=[39m[32m"text-base font-bold text-[#141b38]"[39m[33m>[39m结构化背景档案 ([33mRaw[39m [33mData[39m)[33m<[39m[33m/[39m[33mh2[39m[33m>[39m[0m
+[0m [90m 92 |[39m             [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 93 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-6"[39m[33m>[39m[0m
+ ⨯ src/app/internal/crm/[id]/page.tsx (90:16) @ Database
+ ⨯ ReferenceError: Database is not defined
+    at CRMDetailPage (./src/app/internal/crm/[id]/page.tsx:281:121)
+digest: "378919616"
+[0m [90m 88 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"[39m[33m>[39m[0m
+[0m [90m 89 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-5 border-b border-gray-50 flex items-center gap-2"[39m[33m>[39m[0m
+[0m[31m[1m>[22m[39m[90m 90 |[39m               [33m<[39m[33mDatabase[39m className[33m=[39m[32m"w-5 h-5 text-gray-400"[39m [33m/[39m[33m>[39m[0m
+[0m [90m    |[39m                [31m[1m^[22m[39m[0m
+[0m [90m 91 |[39m               [33m<[39m[33mh2[39m className[33m=[39m[32m"text-base font-bold text-[#141b38]"[39m[33m>[39m结构化背景档案 ([33mRaw[39m [33mData[39m)[33m<[39m[33m/[39m[33mh2[39m[33m>[39m[0m
+[0m [90m 92 |[39m             [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 93 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"p-6"[39m[33m>[39m[0m
+ GET /internal/crm/cmsltwztl0004spah73hya8it 500 in 25ms
+ GET / 200 in 18ms
+ ✓ Compiled in 272ms (3642 modules)
+ ✓ Compiled /api/tasks/analyze-leads in 116ms (1835 modules)
+ POST /api/tasks/analyze-leads 200 in 7740ms
+ ✓ Compiled in 538ms (3621 modules)
+   Reload env: .env.local
+ ✓ Compiled in 143ms (3621 modules)
+ ✓ Compiled in 142ms (1811 modules)
+ ✓ Compiled in 399ms (3646 modules)
+   Reload env: .env.local
+ ✓ Compiled in 363ms (3632 modules)
+ GET /internal/ai-tasks 200 in 117ms
+ ○ Compiling /api/inbox/sync ...
+ ✓ Compiled /api/inbox/sync in 633ms (2193 modules)
+(node:73990) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+IMAP Sync Error: PrismaClientValidationError: 
+Invalid `prisma.customer.create()` invocation:
+
+{
+  data: {
+    name: "Elodie Liu",
+    type: "STUDENT",
+    phone: null,
+    email: "no-reply@accounts.google.com",
+    intent: "Account security alert",
+    source: "Email Auto-Sync",
+    notes: "Subject: 安全提醒",
+    background: "{}",
+    ~~~~~~~~~~
+    insights: "This is an automated Google security notification—not a human inquiry—sent to the email address elodieliu214@gmail.com. The tone is urgent and security-focused, indicating potential unauthorized access to a personal Google account. The sender is likely a student (given the email handle and name pattern), but no academic, demographic, or admissions-related background information is provided. The message reflects concern about digital account safety, not enrollment interest or procedural questions.",
+    nextSteps: [
+      "Ignore as non-inquiry: this is an automated system alert, not a prospective student or partner contact.",
+      "No action required from admissions team; do not respond or follow up.",
+      "Ensure internal staff are aware that such automated emails should not be mistaken for genuine admissions inquiries."
+    ],
+    sourceAI: "inbox_assistant",
+    interactions: {
+      create: {
+        type: "EMAIL",
+        summary: "收到主题为 \"安全提醒\" 的邮件咨询。",
+        messages: "[{\"role\":\"user\",\"content\":\"[image: Google]\\n您的账号中添加了一个新的通行密钥\\n\\n\\nelodieliu214@gmail.com\\n如果您没有添加过通行密钥，则表示可能有人在使用您的账号。请立即检查您的账号并确保其安全。\\n查看活动\\n<https://accounts.google.com/AccountChooser?Email=elodieliu214@gmail.com&continue=https://myaccount.google.com/alert/nt/1783896011556?rfn%3D364%26rfnc%3D1%26eid%3D-8390223175778432549%26et%3D0>\\n您也可以访问以下网址查看安全性活动：\\nhttps://myaccount.google.com/notifications\\n我们向您发送这封电子邮件，目的是让您了解关于您的 Google 账号和服务的重大变化。\\n© 2026 Google LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA\",\"timestamp\":\"2026-07-12T22:40:11.000Z\"}]"
+      }
+    },
+?   id?: String,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime
+  }
+}
+
+Unknown argument `background`. Available options are marked with ?.
+    at wn (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async POST (webpack-internal:///(rsc)/./src/app/api/inbox/sync/route.ts:126:33)
+    at async /Users/aisandbox/Documents/myAI/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:55038
+    at async ek.execute (/Users/aisandbox/Documents/myAI/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:45808)
+    at async ek.handle (/Users/aisandbox/Documents/myAI/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:56292)
+    at async doRender (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1507:28)
+    at async DevServer.renderPageComponent (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1931:24)
+    at async DevServer.renderToResponseImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1969:32)
+    at async DevServer.pipeImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/next-server.js:272:17)
+    at async DevServer.handleRequestImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:816:17)
+    at async /Users/aisandbox/Documents/myAI/node_modules/next/dist/server/dev/next-dev-server.js:339:20
+    at async Span.traceAsyncFn (/Users/aisandbox/Documents/myAI/node_modules/next/dist/trace/trace.js:154:20)
+    at async DevServer.handleRequest (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/dev/next-dev-server.js:336:24)
+    at async invokeRender (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/lib/router-server.js:174:21)
+    at async handleRequest (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/lib/router-server.js:353:24)
+    at async requestHandlerImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/lib/router-server.js:377:13)
+    at async Server.requestListener (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/lib/start-server.js:141:13) {
+  clientVersion: '5.22.0'
+}
+ POST /api/inbox/sync 500 in 20255ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 667ms (3635 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 736ms
+ ✓ Compiled in 675ms (3621 modules)
+ ✓ Compiled in 510ms (1811 modules)
+ ✓ Compiled in 398ms (3636 modules)
+ ✓ Compiled /internal/ai-manage in 279ms (1834 modules)
+ ✓ Compiled /api/admin/characters in 203ms (1867 modules)
+ GET /api/admin/characters 200 in 236ms
+ GET /api/admin/characters 200 in 3ms
+ ✓ Compiled /_not-found in 204ms (3667 modules)
+ GET /default-avatar.png 404 in 250ms
+ GET /api/admin/characters 200 in 12ms
+ GET /api/admin/characters 200 in 4ms
+ GET /default-avatar.png 404 in 10ms
+ ✓ Compiled in 363ms (3681 modules)
+ ✓ Compiled /api/inbox/sync in 208ms (2202 modules)
+ POST /api/inbox/sync 200 in 1037ms
+IMAP Sync Error: PrismaClientValidationError: 
+Invalid `prisma.customer.create()` invocation:
+
+{
+  data: {
+    name: "Zhuang Hao",
+    type: "STUDENT",
+    phone: null,
+    email: "haoz214@gmail.com",
+    intent: "Tuition and admission requirements",
+    source: "Email Auto-Sync",
+    notes: "Subject: hi",
+    background: "{\"grade\":\"Grade 9 (Year 10 in UK system)\",\"location\":\"Shanghai, China\",\"role\":\"parent\",\"concern\":\"child's behavioral adjustment in UK\"}",
+    ~~~~~~~~~~
+    insights: "The sender is a Chinese parent of a初三 (Grade 9) student in Shanghai, expressing pragmatic concerns about tuition and English proficiency requirements (e.g., IELTS). The informal, colloquial tone ('hi', '脾气大', '英国人不是绅士吗') suggests limited familiarity with UK education norms and possible cultural assumptions about behavioral change through environment. Their underlying priority appears to be their child’s personal development and discipline, framing the UK as a corrective cultural setting — revealing deeper concerns about character formation beyond academics.",
+    nextSteps: "1. Reply with clear, bilingual (English/Chinese) fee schedule and entry requirements for international Year 10 applicants. 2. Gently clarify that academic readiness and pastoral support—not cultural stereotypes—drive student success; include links to pastoral care and behavior policy. 3. Offer a brief virtual consultation to discuss holistic admissions criteria and support for students transitioning from Chinese education systems.",
+    sourceAI: "inbox_assistant",
+    interactions: {
+      create: {
+        type: "EMAIL",
+        summary: "收到主题为 \"hi\" 的邮件咨询。",
+        messages: "[{\"role\":\"user\",\"content\":\"老师好，我是上海的一名初三学生家长，想咨询一下你们学校学费多少？需要考雅思吗？\\n我家孩子脾气大，在英国能改改吗，英国人不是绅士吗\\n\",\"timestamp\":\"2026-08-09T14:06:55.000Z\"}]"
+      }
+    },
+?   id?: String,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime
+  }
+}
+
+Unknown argument `background`. Available options are marked with ?.
+    at wn (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/aisandbox/Documents/myAI/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async POST (webpack-internal:///(rsc)/./src/app/api/inbox/sync/route.ts:126:33)
+    at async /Users/aisandbox/Documents/myAI/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:55038
+    at async ek.execute (/Users/aisandbox/Documents/myAI/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:45808)
+    at async ek.handle (/Users/aisandbox/Documents/myAI/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:56292)
+    at async doRender (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1507:28)
+    at async DevServer.renderPageComponent (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1931:24)
+    at async DevServer.renderToResponseImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:1969:32)
+    at async DevServer.pipeImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/next-server.js:272:17)
+    at async DevServer.handleRequestImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/base-server.js:816:17)
+    at async /Users/aisandbox/Documents/myAI/node_modules/next/dist/server/dev/next-dev-server.js:339:20
+    at async Span.traceAsyncFn (/Users/aisandbox/Documents/myAI/node_modules/next/dist/trace/trace.js:154:20)
+    at async DevServer.handleRequest (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/dev/next-dev-server.js:336:24)
+    at async invokeRender (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/lib/router-server.js:174:21)
+    at async handleRequest (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/lib/router-server.js:353:24)
+    at async requestHandlerImpl (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/lib/router-server.js:377:13)
+    at async Server.requestListener (/Users/aisandbox/Documents/myAI/node_modules/next/dist/server/lib/start-server.js:141:13) {
+  clientVersion: '5.22.0'
+}
+ POST /api/inbox/sync 500 in 10054ms
+ POST /api/inbox/sync 200 in 550ms
+ ✓ Compiled in 301ms (2188 modules)
+ ✓ Compiled /api/tasks/analyze-leads in 142ms (2190 modules)
+ POST /api/tasks/analyze-leads 200 in 9023ms

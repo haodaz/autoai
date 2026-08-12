@@ -1,0 +1,169 @@
+{
+  "internal": {
+    "title": "Internal Workspace",
+    "back": "← Back to Portal",
+    "dashboard": {
+      "welcome": "Welcome back, Principal",
+      "status": "System Status: Online",
+      "metrics": {
+        "leads": "New CRM Leads",
+        "tasks": "High Priority Tasks",
+        "kb": "KB Articles",
+        "ai": "Total AI Interactions"
+      },
+      "radar": {
+        "title": "Secretary AI Pulse",
+        "processing": "Processing 3 background tasks",
+        "scanning": "Scanning intent...",
+        "active": "Active",
+        "idle": "Idle"
+      },
+      "recent": {
+        "title": "Recent AI Activities",
+        "viewAll": "View All"
+      },
+      "charts": {
+        "funnel": {
+          "title": "Lead Conversion Funnel",
+          "tooltip": "Conversion Rate"
+        },
+        "cloud": {
+          "title": "B2C High-Frequency Intents & Hot Words",
+          "desc": "Based on Secretary AI intent extraction from the last 7 days of portal inquiries."
+        },
+        "top5": {
+          "title": "Top 5 Inquiry Categories"
+        }
+      }
+    },
+    "nav": {
+      "dashboard": "Dashboard Overview",
+      "crm": "CRM Leads Pool",
+      "kb": "AI Context Data",
+      "kb_files": "KB Management (Files)",
+      "secretary": "Secretary AI",
+      "ai_manage": "AI Settings & Assembly",
+      "ai_tasks": "AI Tasks & Automation"
+    }
+  },
+  "sidebar": {
+    "title": "Yida Agent",
+    "subtitle": "AI Advisor for Managers",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "login": "Login to Yida",
+    "account": "Account",
+    "menu": {
+      "admin": "Admin Dashboard",
+      "settings": "Settings",
+      "about": "About Yida",
+      "export": "Export Data",
+      "logout": "Logout"
+    },
+    "nav": {
+      "square": {
+        "title": "Expert Think Tank",
+        "sub": "Government Advisors"
+      },
+      "chat": {
+        "title": "Yida AI",
+        "sub": "Data & Decision"
+      },
+      "talent": {
+        "title": "Talent Audit",
+        "sub": "Background Checks"
+      },
+      "kb": {
+        "title": "Knowledge Base",
+        "sub": "Policies & Docs"
+      },
+      "reports": {
+        "title": "Reports",
+        "sub": "Analysis & Archive"
+      },
+      "roundtable": {
+        "title": "Chat Rooms",
+        "sub": "Multi-Agent Chat"
+      },
+      "apps": {
+        "title": "App Center",
+        "sub": "Ecosystem Tools"
+      },
+      "a2a": {
+        "title": "A2A Hub",
+        "sub": "Cross-Agent Tasks"
+      }
+    },
+    "new": {
+      "square": {
+        "title": "New Advisor",
+        "sub": "Open Expert Think Tank"
+      },
+      "group": {
+        "title": "New Group",
+        "sub": "Create Round Table"
+      },
+      "kb": {
+        "title": "New Knowledge",
+        "sub": "Upload Documents"
+      }
+    }
+  },
+  "secretary": {
+    "title": "Principal Secretary AI"
+  },
+  "agency": {
+    "title": "Agency Studio",
+    "back": "Back to Homepage",
+    "nav": {
+      "dashboard": "Dashboard",
+      "matching": "Smart Matching",
+      "kb": "Multi-School KB",
+      "crm": "Student CRM",
+      "marketing": "Marketing Hub",
+      "consultant": "AI Consultant",
+      "settings": "Settings"
+    },
+    "dashboard": {
+      "welcome": "Agency Command Center",
+      "status": "Managing 8 school partnerships · 47 active students",
+      "metrics": {
+        "schools": "Managed Schools",
+        "students": "Active Students",
+        "applications": "Pending Applications",
+        "conversion": "Conversion Rate"
+      },
+      "aiTasks": {
+        "title": "AI Task Center"
+      },
+      "pipeline": {
+        "title": "Student Pipeline"
+      },
+      "hotSchools": {
+        "title": "Hot Schools"
+      },
+      "quickActions": {
+        "title": "AI Quick Actions",
+        "match": "Smart School Matching",
+        "matchDesc": "Input student profile and get Reach/Match/Safe recommendations",
+        "compare": "Cross-School Comparison",
+        "compareDesc": "Compare tuition, programs, and rankings across schools",
+        "post": "Generate Marketing Post",
+        "postDesc": "Create engaging Xiaohongshu or WeChat posts in seconds",
+        "report": "Student Progress Report",
+        "reportDesc": "Auto-generate parent-facing progress updates"
+      }
+    },
+    "consultant": {
+      "title": "AI Master Consultant",
+      "subtitle": "Your intelligent partner for school matching, marketing, and student management",
+      "badge": "Multi-School KB Enabled",
+      "prompts": {
+        "match": "Help me match this student: GPA 3.5, IELTS 6.5, wants to study CS, budget under ¥400k/year",
+        "compare": "Compare Myddelton College and Ruthin School on A-Level results, tuition, and accommodation",
+        "post": "Write a Xiaohongshu post based on Myddelton College's latest scholarship policy",
+        "report": "Draft a parent progress report covering interview prep and document submission status"
+      }
+    }
+  }
+}

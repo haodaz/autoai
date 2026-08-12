@@ -1,0 +1,58 @@
+FROM ma.applysquare.net:4567/eng/flora/node:22.22-alpine AS builder
+
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+RUN apk update && \
+  apk add git openssh-client openssl
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm config set registry https://registry.npmmirror.com && \
+  npm config set fetch-retries 5 && \
+  npm config set fetch-retry-mintimeout 10000 && \
+  npm config set fetch-retry-maxtimeout 60000 && \
+  npm config set fetch-timeout 120000 && \
+  ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci --ignore-engines --ignore-scripts || \
+  (npm config set registry https://mirrors.cloud.tencent.com/npm/ && ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci --ignore-engines --ignore-scripts)
+
+COPY prisma ./prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+ENV NEXT_PUBLIC_API_HOST=https://alpha-api.school-demo.com
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+# 构建时占位，避免 OpenAI SDK 模块初始化报错
+ENV OPENAI_API_KEY=sk-placeholder
+
+COPY . .
+RUN npm run build
+
+FROM ma.applysquare.net:4567/eng/flora/node:22.22-alpine
+
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+RUN apk add --no-cache curl nginx openssl
+
+WORKDIR /app
+
+COPY --from=builder /app/package.json /app/package-lock.json ./
+RUN npm config set registry https://registry.npmmirror.com && \
+  npm ci --omit=dev --ignore-scripts || \
+  (npm config set registry https://mirrors.cloud.tencent.com/npm/ && npm ci --omit=dev --ignore-scripts)
+COPY --from=builder /app/prisma ./prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/documents ./documents
+COPY --from=builder /app/next.config.js ./next.config.js
+
+COPY nginx/nginx.conf /etc/nginx/http.d/default.conf
+COPY nginx/start.sh /start.sh
+RUN chmod +x /start.sh
+
+EXPOSE 3000
+
+ENV NODE_ENV=production
+
+CMD ["/start.sh"]

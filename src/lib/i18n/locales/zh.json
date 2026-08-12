@@ -1,0 +1,169 @@
+{
+  "internal": {
+    "title": "内部工作台",
+    "back": "← 返回前台大厅",
+    "nav": {
+      "dashboard": "统筹概览",
+      "crm": "CRM 客情池",
+      "kb": "AI 知识库结构",
+      "kb_files": "知识库管理 (文件)",
+      "secretary": "秘书 AI",
+      "ai_manage": "AI 设置与装配",
+      "ai_tasks": "AI 任务与自动化"
+    },
+    "dashboard": {
+      "welcome": "欢迎回来，校长",
+      "status": "系统状态：运行良好",
+      "metrics": {
+        "leads": "今日新增客情",
+        "tasks": "高优跟进任务",
+        "kb": "知识库条目",
+        "ai": "AI 交互总数"
+      },
+      "radar": {
+        "title": "秘书 AI 实时侦测",
+        "processing": "正在处理 3 个后台任务",
+        "scanning": "意向扫描中...",
+        "active": "活跃",
+        "idle": "空闲"
+      },
+      "recent": {
+        "title": "最新 AI 自动化动态",
+        "viewAll": "查看全部"
+      },
+      "charts": {
+        "funnel": {
+          "title": "线索转化漏斗",
+          "tooltip": "转化率"
+        },
+        "cloud": {
+          "title": "C 端高频意图与热词",
+          "desc": "基于秘书AI近7日对前台咨询数据的意向提取"
+        },
+        "top5": {
+          "title": "Top 5 热门咨询类型"
+        }
+      }
+    }
+  },
+  "sidebar": {
+    "title": "一答智能体",
+    "subtitle": "政务管理者的AI参谋",
+    "collapse": "收起侧栏",
+    "expand": "展开",
+    "login": "登录一答",
+    "account": "账号",
+    "menu": {
+      "admin": "管理后台",
+      "settings": "个人设置",
+      "about": "关于一答",
+      "export": "导出我的数据",
+      "logout": "退出登录"
+    },
+    "nav": {
+      "square": {
+        "title": "专家智库",
+        "sub": "政务顾问团"
+      },
+      "chat": {
+        "title": "一答智能体",
+        "sub": "专业数据与决策"
+      },
+      "talent": {
+        "title": "人才检测",
+        "sub": "背景与信用核查"
+      },
+      "kb": {
+        "title": "知识库",
+        "sub": "政策与文档"
+      },
+      "reports": {
+        "title": "报告记录",
+        "sub": "分析与归档"
+      },
+      "roundtable": {
+        "title": "聊天室",
+        "sub": "多端交流"
+      },
+      "apps": {
+        "title": "应用中心",
+        "sub": "生态扩展工具"
+      },
+      "a2a": {
+        "title": "A2A 智能对接",
+        "sub": "跨体任务分发"
+      }
+    },
+    "new": {
+      "square": {
+        "title": "专家智库",
+        "sub": "打开专家智库选择顾问"
+      },
+      "group": {
+        "title": "新群聊",
+        "sub": "创建多AI圆桌会议"
+      },
+      "kb": {
+        "title": "新知识库",
+        "sub": "上传文档建立知识库"
+      }
+    }
+  },
+  "secretary": {
+    "title": "校长秘书 AI"
+  },
+  "agency": {
+    "title": "留学招生工作室",
+    "back": "返回首页",
+    "nav": {
+      "dashboard": "工作室概览",
+      "matching": "智能选校",
+      "kb": "多校知识库",
+      "crm": "学员 CRM",
+      "marketing": "营销物料中心",
+      "consultant": "AI 规划师",
+      "settings": "工作室设置"
+    },
+    "dashboard": {
+      "welcome": "招生工作室指挥中心",
+      "status": "管理 8 所合作院校 · 47 名在服务学员",
+      "metrics": {
+        "schools": "管理院校数",
+        "students": "在服务学员",
+        "applications": "待处理申请",
+        "conversion": "转化率"
+      },
+      "aiTasks": {
+        "title": "AI 任务中心"
+      },
+      "pipeline": {
+        "title": "学员进度管线"
+      },
+      "hotSchools": {
+        "title": "热门院校排行"
+      },
+      "quickActions": {
+        "title": "AI 快捷操作",
+        "match": "智能选校匹配",
+        "matchDesc": "输入学生画像，获取冲刺/匹配/保底院校推荐",
+        "compare": "多校横向对比",
+        "compareDesc": "对比学费、课程、排名等维度",
+        "post": "生成营销文案",
+        "postDesc": "秒出小红书/微信引流爆款文案",
+        "report": "学员进度报告",
+        "reportDesc": "自动生成面向家长的进度汇报"
+      }
+    },
+    "consultant": {
+      "title": "AI 首席规划师",
+      "subtitle": "您的智能选校、营销与学员管理合伙人",
+      "badge": "多校知识库已启用",
+      "prompts": {
+        "match": "帮我为这个学生做选校匹配：GPA 3.5，雅思 6.5，想学CS，预算40万/年以内",
+        "compare": "对比 Myddelton College 和 Ruthin School 的 A-Level 成绩、学费和住宿条件",
+        "post": "根据 Myddelton College 最新的奖学金政策，帮我写一篇小红书引流文案",
+        "report": "帮我给家长写一封学生申请进度汇报信，涵盖面试准备和材料提交情况"
+      }
+    }
+  }
+}

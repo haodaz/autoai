@@ -1,0 +1,95 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
+  engineType    = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Customer {
+  id           String        @id @default(cuid())
+  type         String        @default("STUDENT")
+  name         String?
+  phone        String?
+  email        String?
+  intent       String?
+  source       String?
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  background   String?
+  insights     String?
+  nextSteps    String?
+  sourceAI     String?
+  interactions Interaction[]
+  meetings     Meeting[]
+}
+
+model Interaction {
+  id         String   @id @default(cuid())
+  customerId String
+  type       String   @default("AI_CHAT")
+  summary    String?
+  messages   String
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id])
+}
+
+model KnowledgeItem {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  category  String
+  audience  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Staff {
+  id    String  @id @default(cuid())
+  name  String
+  role  String  @default("SECRETARY")
+  email String?
+}
+
+model Meeting {
+  id          String    @id @default(cuid())
+  customerId  String?
+  subject     String
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+  description String?
+  status      String    @default("SCHEDULED")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  customer    Customer? @relation(fields: [customerId], references: [id])
+}
+
+model TaskContext {
+  id         String   @id @default(cuid())
+  source     String
+  rawContent String
+  parsedData String?
+  modelUsed  String?
+  createdAt  DateTime @default(now())
+  tasks      Task[]
+}
+
+model Task {
+  id             String      @id @default(cuid())
+  contextId      String
+  agent          String
+  instruction    String
+  status         String      @default("PENDING")
+  resultPayload  String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  copilotHistory String?
+  thinkLog       String?
+  toolCallsLog   String?
+  context        TaskContext @relation(fields: [contextId], references: [id])
+}

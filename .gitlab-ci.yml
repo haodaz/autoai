@@ -1,0 +1,59 @@
+stages:
+  - build_next
+  - deploy
+
+build_alpha:
+  stage: build_next
+  script:
+    - bash ./ci/build_docker_ci.sh
+  variables:
+    DOCKERFILE_DIR: ./
+    DOCKERFILE_NAME: Dockerfile.alpha
+    DOCKER_IMAGE_TAG: ma.applysquare.net:4567/eng/docker/school-demo:alpha
+    NODE_ENV: production
+  tags:
+    - runner-v2
+  when: manual
+  needs: []
+
+deploy-alpha_ss_next:
+  stage: deploy
+  script:
+    - docker run --rm -e K8S_TOKEN -e K8S_APISERVER ma.applysquare.net:4567/eng/docker/kubectl:0.1 -- kubectl --insecure-skip-tls-verify -n $NAMESPACE rollout restart sts $STSNAME
+  variables:
+    NAMESPACE: flora-test
+    STSNAME: school-demo-alpha-frontend
+    KUBERNETES_CPU_REQUEST: "0.001"
+    KUBERNETES_MEMORY_REQUEST: "10Mi"
+  tags:
+    - runner-v2
+  when: manual
+  needs: []
+
+build_prod:
+  stage: build_next
+  script:
+    - bash ./ci/build_docker_ci.sh
+  variables:
+    DOCKERFILE_DIR: ./
+    DOCKERFILE_NAME: Dockerfile.prod
+    DOCKER_IMAGE_TAG: ma.applysquare.net:4567/eng/docker/school-demo:prod
+    NODE_ENV: production
+  tags:
+    - runner-v2
+  when: manual
+  needs: []
+
+deploy-prod_ss_next:
+  stage: deploy
+  script:
+    - docker run --rm -e K8S_TOKEN -e K8S_APISERVER ma.applysquare.net:4567/eng/docker/kubectl:0.1 -- kubectl --insecure-skip-tls-verify -n $NAMESPACE rollout restart sts $STSNAME
+  variables:
+    NAMESPACE: flora-prod
+    STSNAME: school-demo-prod-frontend
+    KUBERNETES_CPU_REQUEST: "0.001"
+    KUBERNETES_MEMORY_REQUEST: "10Mi"
+  tags:
+    - runner-v2
+  when: manual
+  needs: []
