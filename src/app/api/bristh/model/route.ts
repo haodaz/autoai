@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { MODEL_REGISTRY, getSelectedModelId, setSelectedModelId } from '@/lib/model-registry';
 
+export const dynamic = 'force-dynamic';
+
 // GET: Return current model selection + available models
 export async function GET() {
   try {
