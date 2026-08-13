@@ -6,6 +6,7 @@ import { Modal, Tooltip, Spin } from 'antd';
 import { marked } from 'marked';
 
 const LogicWhitepaper = lazy(() => import('./logic/page'));
+import AIEmployeesView from '@/components/employees/AIEmployeesView';
 
 // Standalone preview renderer for use outside VirtualOfficeView
 function renderPreviewStandalone(payload: string | null) {
@@ -132,6 +133,7 @@ export default function BristhWorkspace() {
         <nav className="flex-1 py-5 px-3 space-y-1 overflow-y-auto">
           {[
             { id: 'office', label: '虚拟办公室', icon: Layout },
+            { id: 'employees', label: 'AI员工', icon: Users },
             { id: 'history', label: '任务历史', icon: History },
             { id: 'kb', label: '知识库', icon: BookOpen },
             { id: 'settings', label: 'AI配置与装配', icon: Settings },
@@ -230,6 +232,7 @@ export default function BristhWorkspace() {
           <div style={{ display: activeTab === 'office' ? 'contents' : 'none' }}>
             <VirtualOfficeView onOpenPptCopilot={(data) => { setPendingPptData(data); setActiveTab('toolbox'); }} onOpenDocCopilot={(data) => setCopilotView(data)} />
           </div>
+          {activeTab === 'employees' && <AIEmployeesView />}
           {activeTab === 'history' && <TaskHistoryView onOpenPptCopilot={(data) => { setPendingPptData(data); setActiveTab('toolbox'); }} onOpenDocCopilot={(data) => setCopilotView(data)} />}
           {activeTab === 'kb' && <KnowledgeBaseView />}
           {activeTab === 'settings' && <AISettingsView />}
