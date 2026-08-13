@@ -11,9 +11,7 @@ import { useTranslation } from 'react-i18next';
 const LogicWhitepaper = lazy(() => import('./logic/page'));
 import AIEmployeesView from '@/components/employees/AIEmployeesView';
 import UserManagementView from '@/components/admin/UserManagementView';
-import ToolboxView from '@/components/toolbox/ToolboxView';
 import GroupChatView from '@/components/group-chat/GroupChatView';
-import SkillsView from '@/components/skills/SkillsView';
 import VoiceInputButton from '@/components/ui/VoiceInputButton';
 
 // Standalone preview renderer for use outside VirtualOfficeView
