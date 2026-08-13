@@ -9,7 +9,8 @@
       "toolbox": "Toolbox 工具箱",
       "skills": "Skill 管理",
       "logic": "架构白皮书",
-      "users": "用户管理"
+      "users": "用户管理",
+      "group_chat": "AI 群聊"
     },
     "model": {
       "current": "当前模型",
@@ -149,6 +150,47 @@
     "lang": {
       "toggle": "EN",
       "label": "语言"
+    },
+    "groupChat": {
+      "title": "AI 员工群聊 (Roundtable)",
+      "newChat": "新建群聊",
+      "confirmDelete": "确定解散此群吗？",
+      "enterChat": "进入群聊",
+      "noChatTitle": "暂无群聊，快去创建一个吧",
+      "createModalTitle": "新建 AI 群聊",
+      "chatName": "群名称",
+      "chatNamePlaceholder": "例如：市场方案攻坚组",
+      "selectAgents": "选择参与的 AI 员工",
+      "back": "返回大厅",
+      "backBtn": "返回",
+      "settings": "设置",
+      "mention": "提到 (Mention)",
+      "settingsTitle": "座谈室设置",
+      "orderTitle": "调整发言顺序",
+      "orderSub": "使用箭头调整 AI 依次回复的先后顺序",
+      "lengthTitle": "AI 回复长度",
+      "lenShort": "简洁",
+      "lenShortSub": "200字内",
+      "lenMod": "适中",
+      "lenModSub": "500字内",
+      "lenDet": "详尽",
+      "lenDetSub": "1000字",
+      "lenUnl": "不限",
+      "lenUnlSub": "畅所欲言",
+      "cancel": "取消",
+      "save": "保存设置",
+      "noMsgs": "暂无消息",
+      "reqName": "请输入群名称",
+      "reqAgents": "请选择至少一个 AI 员工",
+      "createFailed": "创建失败",
+      "deleted": "已删除",
+      "delFailed": "删除失败",
+      "sendFailed": "发送失败",
+      "saved": "设置已保存",
+      "saveFailed": "保存失败",
+      "agentsCount": "名员工参与",
+      "placeholder": "输入消息... 使用 @ 提及特定 AI。",
+      "isTyping": "正在输入..."
     }
   },
   "internal": {
@@ -213,22 +255,57 @@
       "logout": "退出登录"
     },
     "nav": {
-      "square": { "title": "专家智库", "sub": "政务顾问团" },
-      "chat": { "title": "一答智能体", "sub": "专业数据与决策" },
-      "talent": { "title": "人才检测", "sub": "背景与信用核查" },
-      "kb": { "title": "知识库", "sub": "政策与文档" },
-      "reports": { "title": "报告记录", "sub": "分析与归档" },
-      "roundtable": { "title": "聊天室", "sub": "多端交流" },
-      "apps": { "title": "应用中心", "sub": "生态扩展工具" },
-      "a2a": { "title": "A2A 智能对接", "sub": "跨体任务分发" }
+      "square": {
+        "title": "专家智库",
+        "sub": "政务顾问团"
+      },
+      "chat": {
+        "title": "一答智能体",
+        "sub": "专业数据与决策"
+      },
+      "talent": {
+        "title": "人才检测",
+        "sub": "背景与信用核查"
+      },
+      "kb": {
+        "title": "知识库",
+        "sub": "政策与文档"
+      },
+      "reports": {
+        "title": "报告记录",
+        "sub": "分析与归档"
+      },
+      "roundtable": {
+        "title": "聊天室",
+        "sub": "多端交流"
+      },
+      "apps": {
+        "title": "应用中心",
+        "sub": "生态扩展工具"
+      },
+      "a2a": {
+        "title": "A2A 智能对接",
+        "sub": "跨体任务分发"
+      }
     },
     "new": {
-      "square": { "title": "专家智库", "sub": "打开专家智库选择顾问" },
-      "group": { "title": "新群聊", "sub": "创建多AI圆桌会议" },
-      "kb": { "title": "新知识库", "sub": "上传文档建立知识库" }
+      "square": {
+        "title": "专家智库",
+        "sub": "打开专家智库选择顾问"
+      },
+      "group": {
+        "title": "新群聊",
+        "sub": "创建多AI圆桌会议"
+      },
+      "kb": {
+        "title": "新知识库",
+        "sub": "上传文档建立知识库"
+      }
     }
   },
-  "secretary": { "title": "校长秘书 AI" },
+  "secretary": {
+    "title": "校长秘书 AI"
+  },
   "agency": {
     "title": "留学招生工作室",
     "back": "返回首页",
@@ -250,9 +327,15 @@
         "applications": "待处理申请",
         "conversion": "转化率"
       },
-      "aiTasks": { "title": "AI 任务中心" },
-      "pipeline": { "title": "学员进度管线" },
-      "hotSchools": { "title": "热门院校排行" },
+      "aiTasks": {
+        "title": "AI 任务中心"
+      },
+      "pipeline": {
+        "title": "学员进度管线"
+      },
+      "hotSchools": {
+        "title": "热门院校排行"
+      },
       "quickActions": {
         "title": "AI 快捷操作",
         "match": "智能选校匹配",

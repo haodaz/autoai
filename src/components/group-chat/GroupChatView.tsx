@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Spin, Modal, Checkbox, message, Popconfirm } from 'antd';
 import { Send, Plus, Users, Trash2, CheckCircle, XCircle, Settings, ArrowUp, ArrowDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // ── 聊天大厅卡片 ──
 function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) => void, allAgents: any[] }) {
+  const { t } = useTranslation();
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -40,8 +42,8 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
   useEffect(() => { fetchChats(); }, []);
 
   const handleCreate = async () => {
-    if (!newChatName.trim()) return message.error('请输入群名称');
-    if (selectedAgents.length === 0) return message.error('请选择至少一个 AI 员工');
+    if (!newChatName.trim()) return message.error(t('bristh.groupChat.reqName', '请输入群名称'));
+    if (selectedAgents.length === 0) return message.error(t('bristh.groupChat.reqAgents', '请选择至少一个 AI 员工'));
     setCreating(true);
     try {
       const res = await fetch('/api/bristh/group-chat', {
@@ -60,7 +62,7 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
       fetchChats();
       onEnterChat(data.id);
     } catch (e: any) {
-      message.error(e.message || '创建失败');
+      message.error(e.message || t('bristh.groupChat.createFailed', '创建失败'));
     } finally {
       setCreating(false);
     }
@@ -69,10 +71,10 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
   const handleDelete = async (id: string) => {
     try {
       await fetch(`/api/bristh/group-chat/${id}`, { method: 'DELETE' });
-      message.success('已删除');
+      message.success(t('bristh.groupChat.deleted', '已删除'));
       fetchChats();
     } catch (e) {
-      message.error('删除失败');
+      message.error(t('bristh.groupChat.delFailed', '删除失败'));
     }
   };
 
@@ -82,20 +84,20 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
     <div className="p-6 h-full flex flex-col bg-gray-50/50">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-black text-gray-800 flex items-center">
-          <Users className="w-6 h-6 mr-2 text-indigo-500" /> AI 员工群聊 (Roundtable)
+          <Users className="w-6 h-6 mr-2 text-indigo-500" /> {t('bristh.groupChat.title', 'AI 员工群聊 (Roundtable)')}
         </h2>
         <button 
           onClick={() => setCreateModalOpen(true)}
           className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm font-bold text-sm"
         >
-          <Plus className="w-4 h-4 mr-1" /> 新建群聊
+          <Plus className="w-4 h-4 mr-1" /> {t('bristh.groupChat.newChat', '新建群聊')}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {chats.map(chat => (
           <div key={chat.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow relative group">
-            <Popconfirm title="确定解散此群吗？" onConfirm={() => handleDelete(chat.id)}>
+            <Popconfirm title={t('bristh.groupChat.confirmDelete', '确定解散此群吗？')} onConfirm={() => handleDelete(chat.id)}>
               <button className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -113,35 +115,31 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
               })}
             </div>
             <p className="text-sm text-gray-500 line-clamp-2 min-h-[40px]">
-              {chat.messages?.[0]?.content || '暂无消息'}
+              {chat.messages?.[0]?.content || t('bristh.groupChat.noMsgs', '暂无消息')}
             </p>
             <button 
               onClick={() => onEnterChat(chat.id)}
               className="mt-4 w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100"
-            >
-              进入群聊
-            </button>
+            > {t('bristh.groupChat.enterChat', '进入群聊')} </button>
           </div>
         ))}
         {chats.length === 0 && (
-          <div className="col-span-full py-12 text-center text-gray-400 font-bold">
-            暂无群聊，快去创建一个吧
-          </div>
+          <div className="col-span-full py-12 text-center text-gray-400 font-bold"> {t('bristh.groupChat.noChatTitle', '暂无群聊，快去创建一个吧')} </div>
         )}
       </div>
 
-      <Modal title="新建 AI 群聊" open={createModalOpen} onCancel={() => setCreateModalOpen(false)} onOk={handleCreate} confirmLoading={creating}>
+      <Modal title={t('bristh.groupChat.createModalTitle', '新建 AI 群聊')} open={createModalOpen} onCancel={() => setCreateModalOpen(false)} onOk={handleCreate} confirmLoading={creating}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">群名称</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1"> {t('bristh.groupChat.chatName', '群名称')} </label>
             <input 
               value={newChatName} onChange={e => setNewChatName(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" 
-              placeholder="例如：市场方案攻坚组"
+              placeholder={t('bristh.groupChat.chatNamePlaceholder', '例如：市场方案攻坚组')}
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">选择参与的 AI 员工</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2"> {t('bristh.groupChat.selectAgents', '选择参与的 AI 员工')} </label>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {allAgents.map(agent => (
                 <label key={agent.id} className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-100">
@@ -173,6 +171,7 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
 
 // ── 聊天室窗口 ──
 function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () => void, allAgents: any[] }) {
+  const { t } = useTranslation();
   const [chatInfo, setChatInfo] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -278,7 +277,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
       }
     } catch (e) {
       console.error(e);
-      message.error('发送失败');
+      message.error(t('bristh.groupChat.sendFailed', '发送失败'));
     } finally {
       setSending(false);
       setAgentTyping(null);
@@ -292,11 +291,11 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ speakingOrder, responseLength })
       });
-      message.success('设置已保存');
+      message.success(t('bristh.groupChat.saved', '设置已保存'));
       setSettingsOpen(false);
       fetchChat();
     } catch (e) {
-      message.error('保存失败');
+      message.error(t('bristh.groupChat.saveFailed', '保存失败'));
     }
   };
 
@@ -364,7 +363,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
       <div className="flex-1 flex flex-col min-w-0 bg-white relative">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shadow-sm z-10 shrink-0">
           <div className="flex items-center md:hidden">
-            <button onClick={onBack} className="mr-4 text-gray-400 font-bold hover:text-gray-800">返回</button>
+            <button onClick={onBack} className="mr-4 text-gray-400 font-bold hover:text-gray-800"> {t('bristh.groupChat.backBtn', '返回')} </button>
             <h2 className="text-lg font-black truncate">{chatInfo.name}</h2>
           </div>
           <div className="hidden md:block text-sm font-bold text-gray-500 truncate mr-4">
@@ -374,8 +373,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
             onClick={() => setSettingsOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-bold shrink-0"
           >
-            <Settings className="w-4 h-4" /> 设置
-          </button>
+            <Settings className="w-4 h-4" /> {t('bristh.groupChat.settings', '设置')} </button>
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
@@ -422,7 +420,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
           {/* Mention Popover */}
           {mentionMenu.visible && mentionCandidates.length > 0 && (
             <div className="absolute bottom-full left-4 mb-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
-              <div className="bg-gray-50 px-3 py-2 text-xs font-bold text-gray-500 border-b border-gray-100">提到 (Mention)</div>
+              <div className="bg-gray-50 px-3 py-2 text-xs font-bold text-gray-500 border-b border-gray-100"> {t('bristh.groupChat.mention', '提到 (Mention)')} </div>
               <div className="max-h-48 overflow-y-auto">
                 {mentionCandidates.map((a: any) => (
                   <button 
@@ -455,7 +453,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
               onChange={handleInputChange}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
               disabled={sending}
-              placeholder="Type a message... Use @ to mention specific AI."
+              placeholder={t('bristh.groupChat.placeholder', 'Type a message... Use @ to mention specific AI.')}
               className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
             />
             <button 
@@ -471,7 +469,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
 
       {/* Settings Modal */}
       <Modal
-        title={<div className="text-lg font-black text-gray-800">座谈室设置</div>}
+        title={<div className="text-lg font-black text-gray-800">{t('bristh.groupChat.settingsTitle', '座谈室设置')}</div>}
         open={settingsOpen}
         onCancel={() => {
           setSettingsOpen(false);
@@ -483,8 +481,8 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
       >
         <div className="space-y-6 mt-4">
           <div>
-            <div className="text-sm font-bold text-gray-700 mb-1">调整发言顺序</div>
-            <div className="text-xs text-gray-400 mb-3">使用箭头调整 AI 依次回复的先后顺序</div>
+            <div className="text-sm font-bold text-gray-700 mb-1"> {t('bristh.groupChat.orderTitle', '调整发言顺序')} </div>
+            <div className="text-xs text-gray-400 mb-3"> {t('bristh.groupChat.orderSub', '使用箭头调整 AI 依次回复的先后顺序')} </div>
             <div className="space-y-2 max-h-[40vh] overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50/50">
               {participantsInfo.map((a: any, idx: number) => (
                 <div key={a.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
@@ -516,13 +514,13 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
           </div>
           
           <div>
-            <div className="text-sm font-bold text-gray-700 mb-3">AI 回复长度</div>
+            <div className="text-sm font-bold text-gray-700 mb-3"> {t('bristh.groupChat.lengthTitle', 'AI 回复长度')} </div>
             <div className="grid grid-cols-4 gap-2">
               {[
-                { val: 'short', label: '简洁', sub: '200字内' },
-                { val: 'moderate', label: '适中', sub: '500字内' },
-                { val: 'detailed', label: '详尽', sub: '1000字' },
-                { val: 'unlimited', label: '不限', sub: '畅所欲言' }
+                { val: 'short', label: t('bristh.groupChat.lenShort', '简洁'), sub: t('bristh.groupChat.lenShortSub', '200字内') },
+                { val: 'moderate', label: t('bristh.groupChat.lenMod', '适中'), sub: t('bristh.groupChat.lenModSub', '500字内') },
+                { val: 'detailed', label: t('bristh.groupChat.lenDet', '详尽'), sub: t('bristh.groupChat.lenDetSub', '1000字') },
+                { val: 'unlimited', label: t('bristh.groupChat.lenUnl', '不限'), sub: t('bristh.groupChat.lenUnlSub', '畅所欲言') }
               ].map(opt => (
                 <button
                   key={opt.val}
@@ -537,8 +535,8 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
           </div>
           
           <div className="pt-4 flex justify-end gap-3">
-            <button onClick={() => { setSettingsOpen(false); fetchChat(); }} className="px-5 py-2 text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">取消</button>
-            <button onClick={handleSaveSettings} className="px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">保存设置</button>
+            <button onClick={() => { setSettingsOpen(false); fetchChat(); }} className="px-5 py-2 text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"> {t('bristh.groupChat.cancel', '取消')} </button>
+            <button onClick={handleSaveSettings} className="px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors"> {t('bristh.groupChat.save', '保存设置')} </button>
           </div>
         </div>
       </Modal>
@@ -547,6 +545,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
 }
 
 export default function GroupChatView() {
+  const { t } = useTranslation();
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [allAgents, setAllAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
