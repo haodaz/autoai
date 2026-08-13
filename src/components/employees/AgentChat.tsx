@@ -3,17 +3,23 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, Send, Download, FileText, Calendar, Mail, Sparkles, Bot, User, ChevronRight, Loader2 } from 'lucide-react';
 import { marked } from 'marked';
+import { useTranslation } from 'react-i18next';
+import VoiceInputButton from '@/components/ui/VoiceInputButton';
 
 interface AgentConfig {
   id: string;
   name: string;
   title: string;
   description: string;
+  description_en?: string;
   avatar: string;
   color: string;
   skills_preview: string[];
+  skills_preview_en?: string[];
   greeting?: string;
+  greeting_en?: string;
   quick_prompts?: string[];
+  quick_prompts_en?: string[];
 }
 
 interface ToolCall {
@@ -44,6 +50,7 @@ const COLOR_MAP: Record<string, { accent: string; light: string; gradient: strin
 };
 
 export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBack: () => void }) {
+  const { i18n } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,16 +65,22 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const isEn = i18n.language?.startsWith('en');
+  const greeting = isEn ? (agent.greeting_en || agent.greeting) : agent.greeting;
+  const quickPrompts = isEn ? (agent.quick_prompts_en || agent.quick_prompts) : agent.quick_prompts;
+  const agentDesc = isEn ? (agent.description_en || agent.description) : agent.description;
+  const agentSkills = isEn ? (agent.skills_preview_en || agent.skills_preview) : agent.skills_preview;
+
   // Initialize with greeting
   useEffect(() => {
-    if (agent.greeting) {
+    if (greeting) {
       setMessages([{
         id: 'greeting',
         role: 'assistant',
-        content: agent.greeting,
+        content: greeting,
       }]);
     }
-  }, [agent.id]);
+  }, [agent.id, isEn]);
 
   const colors = COLOR_MAP[agent.color] || COLOR_MAP.blue;
 
@@ -100,7 +113,7 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
       const response = await fetch('/api/chat/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId: agent.id, messages: historyForApi }),
+        body: JSON.stringify({ agentId: agent.id, messages: historyForApi, locale: i18n.language }),
       });
 
       if (!response.ok) throw new Error('Failed to send message');
@@ -218,10 +231,17 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
 
   return (
     <div className="h-full flex">
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Chat Area — aurora gradient bg extends behind everything */}
+      <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
+        {/* Aurora gradient background — covers entire chat area including input */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-200/30 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-200/30 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+          <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-violet-200/20 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '12s', animationDelay: '4s' }} />
+        </div>
+
         {/* Header */}
-        <div className="px-4 md:px-6 py-3 border-b border-gray-100 bg-white flex items-center gap-3 shrink-0">
+        <div className="px-4 md:px-6 py-3 border-b border-gray-100 bg-white/80 backdrop-blur-sm flex items-center gap-3 shrink-0 relative z-10">
           <button onClick={onBack} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400">
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -236,111 +256,127 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
-          {messages.map(msg => (
-            <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-              {/* Avatar */}
-              {msg.role === 'assistant' ? (
-                <img src={agent.avatar} alt={agent.name} className="w-8 h-8 rounded-full object-cover bg-gray-100 shrink-0 mt-1" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shrink-0 mt-1">
-                  <User className="w-4 h-4 text-white" />
+        {/* Scrollable content area — messages + input share max-w-3xl */}
+        <div className="flex-1 flex flex-col overflow-y-auto relative z-10">
+          {/* Messages */}
+          <div className="flex-1 px-4 md:px-6 py-4 space-y-4">
+            <div className="max-w-3xl mx-auto space-y-4">
+              {messages.map(msg => (
+                <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                  {/* Avatar */}
+                  {msg.role === 'assistant' ? (
+                    <img src={agent.avatar} alt={agent.name} className="w-8 h-8 rounded-full object-cover bg-gray-100 shrink-0 mt-1" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shrink-0 mt-1">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+
+                  {/* Bubble */}
+                  <div className={`max-w-[75%] ${msg.role === 'user' ? 'text-right' : ''}`}>
+                    <div
+                      className={`inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white rounded-tr-sm'
+                          : 'bg-white/80 backdrop-blur-sm text-gray-800 rounded-tl-sm border border-gray-100/80 shadow-sm'
+                      }`}
+                    >
+                      {msg.content === '⏳' ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      ) : msg.role === 'assistant' ? (
+                        <div
+                          className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0.5"
+                          dangerouslySetInnerHTML={{ __html: marked.parse(msg.content || '') }}
+                        />
+                      ) : (
+                        msg.content
+                      )}
+                    </div>
+
+                    {/* Tool Call Cards */}
+                    {msg.toolCalls && Object.values(msg.toolCalls).map(tc => (
+                      <ToolCallCard key={tc.id} toolCall={tc} colors={colors} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* Quick prompts — only show if there's just the greeting */}
+              {messages.length <= 1 && quickPrompts && quickPrompts.length > 0 && (
+                <div className="flex flex-col items-start gap-2 pt-2">
+                  <p className="text-xs font-bold text-gray-400 ml-11">{isEn ? '💡 You might ask' : '💡 你可能想问'}</p>
+                  {quickPrompts.map((prompt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => sendMessage(prompt)}
+                      className="ml-11 text-left text-xs text-indigo-600 font-medium px-3 py-2 bg-white/70 backdrop-blur-sm hover:bg-indigo-50 rounded-xl border border-indigo-100/80 transition-colors flex items-center gap-2 shadow-sm"
+                    >
+                      <ChevronRight className="w-3 h-3 shrink-0" />
+                      {prompt}
+                    </button>
+                  ))}
                 </div>
               )}
 
-              {/* Bubble */}
-              <div className={`max-w-[75%] ${msg.role === 'user' ? 'text-right' : ''}`}>
-                <div
-                  className={`inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white rounded-tr-sm'
-                      : 'bg-gray-50 text-gray-800 rounded-tl-sm border border-gray-100'
-                  }`}
-                >
-                  {msg.content === '⏳' ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                  ) : msg.role === 'assistant' ? (
-                    <div
-                      className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0.5"
-                      dangerouslySetInnerHTML={{ __html: marked.parse(msg.content || '') }}
-                    />
-                  ) : (
-                    msg.content
-                  )}
+              {/* Loading indicator */}
+              {loading && messages[messages.length - 1]?.content === '' && (
+                <div className="flex gap-3">
+                  <img src={agent.avatar} alt="" className="w-8 h-8 rounded-full object-cover bg-gray-100 shrink-0" />
+                  <div className="px-4 py-3 bg-white/80 backdrop-blur-sm rounded-2xl rounded-tl-sm border border-gray-100/80 shadow-sm">
+                    <div className="flex gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
                 </div>
+              )}
 
-                {/* Tool Call Cards */}
-                {msg.toolCalls && Object.values(msg.toolCalls).map(tc => (
-                  <ToolCallCard key={tc.id} toolCall={tc} colors={colors} />
-                ))}
-              </div>
+              <div ref={messagesEndRef} />
             </div>
-          ))}
-
-          {/* Quick prompts — only show if there's just the greeting */}
-          {messages.length <= 1 && agent.quick_prompts && agent.quick_prompts.length > 0 && (
-            <div className="flex flex-col items-start gap-2 pt-2">
-              <p className="text-xs font-bold text-gray-400 ml-11">💡 你可能想问</p>
-              {agent.quick_prompts.map((prompt, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => sendMessage(prompt)}
-                  className="ml-11 text-left text-xs text-indigo-600 font-medium px-3 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors flex items-center gap-2"
-                >
-                  <ChevronRight className="w-3 h-3 shrink-0" />
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Loading indicator */}
-          {loading && messages[messages.length - 1]?.content === '' && (
-            <div className="flex gap-3">
-              <img src={agent.avatar} alt="" className="w-8 h-8 rounded-full object-cover bg-gray-100 shrink-0" />
-              <div className="px-4 py-3 bg-gray-50 rounded-2xl rounded-tl-sm border border-gray-100">
-                <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input Area */}
-        <div className="px-4 md:px-6 py-3 border-t border-gray-100 bg-white shrink-0">
-          <div className="flex items-end gap-2 max-w-3xl mx-auto">
-            <div className="flex-1 relative">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={`告诉 ${agent.name} 你的需求...`}
-                rows={1}
-                className="w-full resize-none px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all"
-                style={{ maxHeight: '120px' }}
-                onInput={e => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = 'auto';
-                  target.style.height = Math.min(target.scrollHeight, 120) + 'px';
-                }}
-              />
-            </div>
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || loading}
-              className="p-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-            >
-              <Send className="w-4 h-4" />
-            </button>
           </div>
-          <p className="text-center text-[10px] text-gray-300 mt-2">Shift+Enter 换行 · Enter 发送</p>
+
+          {/* Input Area — transparent bg, same max-w-3xl as messages */}
+          <div className="px-4 md:px-6 py-3 shrink-0">
+            <div className="max-w-3xl mx-auto">
+              <div className="relative flex items-end bg-white/90 backdrop-blur-sm border border-gray-200/80 rounded-xl shadow-sm focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                {/* Mic button — inside left */}
+                <div className="flex items-center pl-3 pb-3 shrink-0">
+                  <VoiceInputButton
+                    onTranscript={(text) => setInput(prev => prev + text)}
+                    lang={i18n.language === 'zh' ? 'zh-CN' : 'en-US'}
+                  />
+                </div>
+                {/* Textarea */}
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={isEn ? `Tell ${agent.name} what you need...` : `告诉 ${agent.name} 你的需求...`}
+                  rows={1}
+                  className="flex-1 resize-none px-2 py-3 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
+                  style={{ maxHeight: '120px' }}
+                  onInput={e => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+                  }}
+                />
+                {/* Send button — inside right */}
+                <div className="flex items-center pr-2 pb-2 shrink-0">
+                  <button
+                    onClick={() => sendMessage(input)}
+                    disabled={!input.trim() || loading}
+                    className="p-2 bg-gradient-to-r from-indigo-500 to-violet-500 text-white rounded-lg hover:opacity-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-center text-[10px] text-gray-300 mt-2">{isEn ? 'Shift+Enter new line · Enter send' : 'Shift+Enter 换行 · Enter 发送'}</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -355,13 +391,13 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
         </div>
 
         <div className="p-4 border-b border-gray-50">
-          <p className="text-xs text-gray-500 leading-relaxed">{agent.description}</p>
+          <p className="text-xs text-gray-500 leading-relaxed">{agentDesc}</p>
         </div>
 
         <div className="p-4 border-b border-gray-50">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">技能</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">{isEn ? 'Skills' : '技能'}</p>
           <div className="flex flex-wrap gap-1.5">
-            {agent.skills_preview.map(skill => (
+            {agentSkills.map(skill => (
               <span key={skill} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${colors.light} ${colors.accent}`}>
                 {skill}
               </span>
@@ -370,7 +406,7 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
         </div>
 
         <div className="p-4 flex-1">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">可用工具</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">{isEn ? 'Tools' : '可用工具'}</p>
           <div className="space-y-2">
             {getToolsForDisplay(agent.id).map(tool => (
               <div key={tool.name} className="flex items-center gap-2 text-xs text-gray-600">

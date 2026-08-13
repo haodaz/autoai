@@ -22,5 +22,17 @@
     "服务协议中有哪些必要条款？",
     "帮我审查这段合同条款"
   ],
-  "realistic_avatar": "/avatar_eric.png"
+  "realistic_avatar": "/avatar_eric.png",
+  "greeting_en": "Hi! I'm Eric, Legal Writing Specialist. I can help you draft NDAs, contracts, legal agreements, and review terms. What legal document do you need?",
+  "quick_prompts_en": [
+    "Draft a standard NDA for our partnership",
+    "What clauses should a service agreement include?",
+    "Review this contract for compliance issues"
+  ],
+  "description_en": "Drafts legal documents including NDAs, contracts, and service agreements with proper legal terminology and structure.",
+  "skills_preview_en": [
+    "Contract Drafting",
+    "NDA Templates",
+    "Legal Review"
+  ]
 }

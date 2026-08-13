@@ -1,4 +1,156 @@
 {
+  "bristh": {
+    "nav": {
+      "office": "Virtual Office",
+      "employees": "AI Employees",
+      "history": "Task History",
+      "kb": "Knowledge Base",
+      "settings": "AI Settings",
+      "toolbox": "Toolbox",
+      "skills": "Skill Management",
+      "logic": "Design Doc",
+      "users": "User Management"
+    },
+    "model": {
+      "current": "Current Model",
+      "switch": "Switch AI Model",
+      "noKey": "No Key",
+      "loading": "Loading..."
+    },
+    "profile": {
+      "title": "Profile",
+      "displayName": "Display Name",
+      "phone": "Phone",
+      "email": "Email",
+      "avatar": "Avatar URL",
+      "save": "Save",
+      "saving": "Saving…",
+      "account": "Account",
+      "role": "Role",
+      "admin": "Admin",
+      "user": "User",
+      "logout": "Logout"
+    },
+    "office": {
+      "taskCard": "Current Task",
+      "idle": "Idle",
+      "completed": "Completed",
+      "failed": "Failed",
+      "running": "Running",
+      "noTask": "No active tasks. Click to create a new task.",
+      "addTask": "New / Manage Input",
+      "loadHistory": "Load Latest Execution",
+      "terminate": "Terminate & Reset",
+      "retry": "Retry Task",
+      "archive": "Archive & Reset",
+      "log": "Execution Log",
+      "waiting": "Waiting for incoming tasks...",
+      "noAgent": "No agents active, waiting for Chief to dispatch...",
+      "noAgentHint": "Submit a task above and Chief will auto-dispatch the AI team",
+      "orchestrator": "Orchestrator",
+      "online": "ONLINE",
+      "orchestrate": "Orchestrate",
+      "parallel": "Parallel Exec",
+      "phase": "Phase",
+      "inputModal": {
+        "title": "Task Input",
+        "textTab": "Text Input",
+        "fileTab": "Upload File",
+        "emailTab": "Link Email",
+        "placeholder": "Enter the text content to be processed by the AI team…",
+        "submit": "Submit to Chief",
+        "uploadHint": "Upload a text file (.txt, .md, .csv)",
+        "loadingEmails": "Loading email list…",
+        "noEmails": "No emails available"
+      },
+      "download": "Download",
+      "copy": "Copy",
+      "downloadPptx": "Download .pptx",
+      "downloadIcs": "Download .ics"
+    },
+    "history": {
+      "title": "Task History",
+      "records": "{{count}} task records",
+      "noTask": "No tasks",
+      "selectToView": "Select a task to view details",
+      "backToList": "Back to list",
+      "taskInfo": "Task Info",
+      "copy": "Copy Content",
+      "rerun": "Re-run",
+      "source": "Source",
+      "time": "Created At",
+      "subtaskCount": "Subtasks",
+      "status": "Status",
+      "modelUsed": "Model Used",
+      "noModel": "Not recorded",
+      "rawInput": "Raw Input",
+      "pipeline": "Execution Pipeline",
+      "output": "Output",
+      "download": "Download",
+      "copilot": "Copilot",
+      "previewTitle": "Output Preview",
+      "feedbackTitle": "Feedback & Refine",
+      "copilotPlaceholder": "Tell the AI what to change..."
+    },
+    "status": {
+      "COMPLETED": "Completed",
+      "PENDING": "Pending",
+      "RUNNING": "Running",
+      "FAILED": "Failed"
+    },
+    "source": {
+      "EMAIL": "Email Trigger",
+      "TEXT_PASTE": "Manual Input",
+      "VOICE": "Voice Input",
+      "API": "API Call"
+    },
+    "skills": {
+      "title": "Skill Workflow Manager",
+      "desc": "Define standard SOPs and data flows. Assemble atomic tools from Toolbox with AI Agents to create reusable skill chains.",
+      "backToList": "Back to Skills",
+      "pipeline": "Execution Pipeline"
+    },
+    "settings": {
+      "title": "AI Assembly & Configuration",
+      "desc": "Manage role definitions, persona prompts, and knowledge scopes for the Bristh multi-agent system",
+      "backToList": "Back to list",
+      "save": "Save Config",
+      "saving": "Saving…",
+      "saveSuccess": "✅ Saved",
+      "saveFail": "❌ Save failed",
+      "networkError": "❌ Network error",
+      "basicInfo": "Basic Info",
+      "name": "Name",
+      "jobTitle": "Job Title",
+      "description": "Description",
+      "enableAgent": "Enable this Agent",
+      "outputFormat": "Output Format:",
+      "persona": "Persona / System Prompt",
+      "personaLabel": "Persona",
+      "personaHint": "Core identity and behavioral guidance",
+      "skillTags": "Skill Tags",
+      "skillPlaceholder": "Enter a new skill tag and press Enter…",
+      "context": "Private Knowledge / Context",
+      "knowledgeScope": "Knowledge Scope:",
+      "globalAndPrivate": "🌐 Global + 🔒 Private",
+      "globalOnly": "🌐 Global Only",
+      "privateDocsCount": "{{count}} private docs",
+      "noPrivateDocs": "No private docs yet. Add .md files to the context/ directory.",
+      "configure": "Configure",
+      "assembly": "Assembly",
+      "layeredKb": "🌐+🔒 Layered KB",
+      "globalKb": "🌐 Global KB"
+    },
+    "kb": {
+      "title": "Unified Asset Store (Task Context DB)",
+      "desc": "This stores all raw materials received by the system (text, file content, emails). They are isolated, read-only assets that agents pull from as background context when executing their dispatched tasks.",
+      "empty": "Asset store is empty. No materials have been ingested yet."
+    },
+    "lang": {
+      "toggle": "中",
+      "label": "Language"
+    }
+  },
   "internal": {
     "title": "Internal Workspace",
     "back": "← Back to Portal",
@@ -23,17 +175,9 @@
         "viewAll": "View All"
       },
       "charts": {
-        "funnel": {
-          "title": "Lead Conversion Funnel",
-          "tooltip": "Conversion Rate"
-        },
-        "cloud": {
-          "title": "B2C High-Frequency Intents & Hot Words",
-          "desc": "Based on Secretary AI intent extraction from the last 7 days of portal inquiries."
-        },
-        "top5": {
-          "title": "Top 5 Inquiry Categories"
-        }
+        "funnel": { "title": "Lead Conversion Funnel", "tooltip": "Conversion Rate" },
+        "cloud": { "title": "B2C High-Frequency Intents & Hot Words", "desc": "Based on Secretary AI intent extraction from the last 7 days of portal inquiries." },
+        "top5": { "title": "Top 5 Inquiry Categories" }
       }
     },
     "nav": {
@@ -61,57 +205,22 @@
       "logout": "Logout"
     },
     "nav": {
-      "square": {
-        "title": "Expert Think Tank",
-        "sub": "Government Advisors"
-      },
-      "chat": {
-        "title": "Yida AI",
-        "sub": "Data & Decision"
-      },
-      "talent": {
-        "title": "Talent Audit",
-        "sub": "Background Checks"
-      },
-      "kb": {
-        "title": "Knowledge Base",
-        "sub": "Policies & Docs"
-      },
-      "reports": {
-        "title": "Reports",
-        "sub": "Analysis & Archive"
-      },
-      "roundtable": {
-        "title": "Chat Rooms",
-        "sub": "Multi-Agent Chat"
-      },
-      "apps": {
-        "title": "App Center",
-        "sub": "Ecosystem Tools"
-      },
-      "a2a": {
-        "title": "A2A Hub",
-        "sub": "Cross-Agent Tasks"
-      }
+      "square": { "title": "Expert Think Tank", "sub": "Government Advisors" },
+      "chat": { "title": "Yida AI", "sub": "Data & Decision" },
+      "talent": { "title": "Talent Audit", "sub": "Background Checks" },
+      "kb": { "title": "Knowledge Base", "sub": "Policies & Docs" },
+      "reports": { "title": "Reports", "sub": "Analysis & Archive" },
+      "roundtable": { "title": "Chat Rooms", "sub": "Multi-Agent Chat" },
+      "apps": { "title": "App Center", "sub": "Ecosystem Tools" },
+      "a2a": { "title": "A2A Hub", "sub": "Cross-Agent Tasks" }
     },
     "new": {
-      "square": {
-        "title": "New Advisor",
-        "sub": "Open Expert Think Tank"
-      },
-      "group": {
-        "title": "New Group",
-        "sub": "Create Round Table"
-      },
-      "kb": {
-        "title": "New Knowledge",
-        "sub": "Upload Documents"
-      }
+      "square": { "title": "New Advisor", "sub": "Open Expert Think Tank" },
+      "group": { "title": "New Group", "sub": "Create Round Table" },
+      "kb": { "title": "New Knowledge", "sub": "Upload Documents" }
     }
   },
-  "secretary": {
-    "title": "Principal Secretary AI"
-  },
+  "secretary": { "title": "Principal Secretary AI" },
   "agency": {
     "title": "Agency Studio",
     "back": "Back to Homepage",
@@ -133,15 +242,9 @@
         "applications": "Pending Applications",
         "conversion": "Conversion Rate"
       },
-      "aiTasks": {
-        "title": "AI Task Center"
-      },
-      "pipeline": {
-        "title": "Student Pipeline"
-      },
-      "hotSchools": {
-        "title": "Hot Schools"
-      },
+      "aiTasks": { "title": "AI Task Center" },
+      "pipeline": { "title": "Student Pipeline" },
+      "hotSchools": { "title": "Hot Schools" },
       "quickActions": {
         "title": "AI Quick Actions",
         "match": "Smart School Matching",

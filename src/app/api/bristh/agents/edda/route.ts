@@ -10,7 +10,7 @@ import { buildAgentPrompt } from '@/lib/bristh-config';
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId } = await req.json();
+    const { taskId, locale } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     const fallbackPersona = 'You are Edda, the Presentation Specialist at Bristh Enrollment Partners. Transform text into structured slide presentations.';
     
-    const systemPrompt = await buildAgentPrompt('edda', task.instruction, task.context.rawContent, fallbackPersona)
+    const systemPrompt = await buildAgentPrompt('edda', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + `\n\nOutput exactly in this JSON format:
 {
   "think": "Write your step-by-step thinking in Markdown here",

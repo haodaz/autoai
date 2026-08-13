@@ -15,7 +15,12 @@ i18n
       en: { translation: en },
       zh: { translation: zh }
     },
-    fallbackLng: 'zh', // Default to Chinese globally
+    fallbackLng: 'en',
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'bristh_lang',
+    },
     interpolation: {
       escapeValue: false // React already escapes by default
     }

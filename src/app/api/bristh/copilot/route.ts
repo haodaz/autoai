@@ -41,7 +41,7 @@ function slidesToLegacy(slides: any[]) {
 
 export async function POST(req: Request) {
   try {
-    const { taskId, message } = await req.json();
+    const { taskId, message, locale } = await req.json();
 
     const task = await prisma.task.findUnique({
       where: { id: taskId },
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
     // Build agent-specific prompt with persona
     const fallbackPersona = `You are ${task.agent}, a specialist AI at Bristh Enrollment Partners.`;
-    const agentPrompt = await buildAgentPrompt(task.agent.toLowerCase(), task.instruction, task.context.rawContent, fallbackPersona);
+    const agentPrompt = await buildAgentPrompt(task.agent.toLowerCase(), task.instruction, task.context.rawContent, fallbackPersona, locale);
 
     let systemPrompt = `${agentPrompt}
 

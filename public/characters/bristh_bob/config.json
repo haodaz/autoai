@@ -22,5 +22,17 @@
     "创建一个本周五的客户拜访日程",
     "如何高效管理一周的日程安排？"
   ],
-  "realistic_avatar": "/avatar_bob.png"
+  "realistic_avatar": "/avatar_bob.png",
+  "greeting_en": "Hi! I'm Bob, Scheduling Specialist. I can help you create calendar events, schedule meetings, and manage appointments. What would you like to arrange?",
+  "quick_prompts_en": [
+    "Schedule a 3pm meeting next Wednesday",
+    "Create a weekly recurring standup event",
+    "How should I organize high-priority meetings?"
+  ],
+  "description_en": "Creates calendar events, schedules meetings, and manages appointment coordination with smart time-slot suggestions.",
+  "skills_preview_en": [
+    "Calendar Events",
+    "Meeting Scheduling",
+    "Time Management"
+  ]
 }

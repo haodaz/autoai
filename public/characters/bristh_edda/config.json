@@ -22,5 +22,17 @@
     "把以下内容转成一份3页的演示文稿",
     "你能做哪些类型的PPT？"
   ],
-  "realistic_avatar": "/avatar_edda.png"
+  "realistic_avatar": "/avatar_edda.png",
+  "greeting_en": "Hi! I'm Edda, PPT Specialist. I can help you create professional presentation slides, discuss content structure, and refine your deck. What topic shall we work on?",
+  "quick_prompts_en": [
+    "Create a PPT about our new education partnership",
+    "Make a 3-page company overview deck",
+    "Can you help refine my existing PPT?"
+  ],
+  "description_en": "Creates professional presentation slides with structured content, visual layouts, and downloadable PPTX files.",
+  "skills_preview_en": [
+    "PPT Generation",
+    "Slide Design",
+    "Content Structure"
+  ]
 }

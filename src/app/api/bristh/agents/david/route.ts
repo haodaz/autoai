@@ -7,7 +7,7 @@ import { buildAgentPrompt } from '@/lib/bristh-config';
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId } = await req.json();
+    const { taskId, locale } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     const fallbackPersona = 'You are David, the Internal Audit & Remediation Specialist at Bristh Enrollment Partners.';
     
-    const systemPrompt = await buildAgentPrompt('david', task.instruction, task.context.rawContent, fallbackPersona)
+    const systemPrompt = await buildAgentPrompt('david', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\nGenerate an "Internal Business Remediation Report" in Markdown. Include: 🚨 发现的隐患与问题 (Identified Issues) and 📋 业务整改建议 (Remediation Action Items). Output ONLY raw Markdown.';
 
     const { client, config } = await getModelClient();

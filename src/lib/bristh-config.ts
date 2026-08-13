@@ -63,7 +63,8 @@ export async function buildAgentPrompt(
   agentId: string,
   instruction: string,
   rawContent: string,
-  fallbackPersona: string
+  fallbackPersona: string,
+  locale?: string
 ): Promise<string> {
   const config = await loadAgentConfig(agentId);
   const privateContext = await loadAgentContext(agentId);
@@ -74,6 +75,13 @@ export async function buildAgentPrompt(
   
   if (privateContext) {
     prompt += `\n\nAdditional reference knowledge (agent-specific):\n----------------\n${privateContext}\n----------------`;
+  }
+
+  // Inject language instruction based on user's UI locale
+  if (locale?.startsWith('zh')) {
+    prompt += '\n\n【语言要求】请始终使用简体中文进行输出，所有内容请用简体中文撰写，不要使用英文。';
+  } else if (locale?.startsWith('en')) {
+    prompt += '\n\n【Language Requirement】Always respond entirely in English. Do not use Chinese.';
   }
   
   return prompt;

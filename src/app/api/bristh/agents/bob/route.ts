@@ -8,7 +8,7 @@ import { buildAgentPrompt } from '@/lib/bristh-config';
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId } = await req.json();
+    const { taskId, locale } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     const fallbackPersona = 'You are Bob, the Scheduling Assistant at Bristh Enrollment Partners. Extract meeting details from context and generate calendar events.';
     
-    const systemPrompt = await buildAgentPrompt('bob', task.instruction, task.context.rawContent, fallbackPersona)
+    const systemPrompt = await buildAgentPrompt('bob', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + `\n\nExtract the meeting details. Output ONLY a valid JSON object:
 {
   "subject": "A short, professional title for the meeting",

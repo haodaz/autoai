@@ -7,7 +7,7 @@ import { buildAgentPrompt } from '@/lib/bristh-config';
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId } = await req.json();
+    const { taskId, locale } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     const fallbackPersona = 'You are Eric, the Legal and Compliance Officer at Bristh Enrollment Partners. Draft legal documents based on business agreements.';
     
-    const systemPrompt = await buildAgentPrompt('eric', task.instruction, task.context.rawContent, fallbackPersona)
+    const systemPrompt = await buildAgentPrompt('eric', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\nDraft a legal document (Service Agreement, NDA, MOU, or Partnership Contract) using standard legal language. Extract variables from context. Use placeholders like [INSERT FEE AMOUNT HERE] for missing info. Format as a formal contract in Markdown with numbered clauses and signature blocks. Output ONLY raw Markdown.';
 
     const { client, config } = await getModelClient();

@@ -7,7 +7,7 @@ import { buildAgentPrompt } from '@/lib/bristh-config';
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId } = await req.json();
+    const { taskId, locale } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     // 2. Build prompt from config (persona from config.json + private context files)
     const fallbackPersona = 'You are Alice, the Proposal Architect at Bristh Enrollment Partners. Generate professional business proposals in Markdown format with clear headings: Background, Proposed Solution, Timeline, and Investment.';
     
-    const systemPrompt = await buildAgentPrompt('alice', task.instruction, task.context.rawContent, fallbackPersona)
+    const systemPrompt = await buildAgentPrompt('alice', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\nBased on this context, generate a highly professional, persuasive business proposal or solution architecture document (in Markdown format). Just output the raw Markdown content.';
 
     const { client, config } = await getModelClient();

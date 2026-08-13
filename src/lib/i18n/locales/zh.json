@@ -1,4 +1,156 @@
 {
+  "bristh": {
+    "nav": {
+      "office": "虚拟办公室",
+      "employees": "AI员工",
+      "history": "任务历史",
+      "kb": "知识库",
+      "settings": "AI配置与装配",
+      "toolbox": "Toolbox 工具箱",
+      "skills": "Skill 管理",
+      "logic": "架构白皮书",
+      "users": "用户管理"
+    },
+    "model": {
+      "current": "当前模型",
+      "switch": "切换 AI 模型",
+      "noKey": "无 Key",
+      "loading": "Loading..."
+    },
+    "profile": {
+      "title": "个人资料",
+      "displayName": "昵称 / Display Name",
+      "phone": "手机 / Phone",
+      "email": "邮箱 / Email",
+      "avatar": "头像 URL / Avatar",
+      "save": "保存",
+      "saving": "保存中…",
+      "account": "账号",
+      "role": "角色",
+      "admin": "管理员",
+      "user": "普通用户",
+      "logout": "退出登录"
+    },
+    "office": {
+      "taskCard": "当前任务卡片",
+      "idle": "待命",
+      "completed": "已完成",
+      "failed": "遇到异常",
+      "running": "执行中",
+      "noTask": "暂无活动任务。点击新增接入任务。",
+      "addTask": "新增 / 管理接入",
+      "loadHistory": "加载最新后台执行",
+      "terminate": "终止复位",
+      "retry": "重试任务",
+      "archive": "归档复位",
+      "log": "任务执行 Log",
+      "waiting": "Waiting for incoming tasks...",
+      "noAgent": "暂无参与的智能体，等待 Chief 分派...",
+      "noAgentHint": "在上方输入框中提交任务，Chief 将自动调度 AI 团队",
+      "orchestrator": "任务总管 / Orchestrator",
+      "online": "ONLINE",
+      "orchestrate": "编排",
+      "parallel": "并发执行",
+      "phase": "阶段",
+      "inputModal": {
+        "title": "任务接入",
+        "textTab": "文字输入",
+        "fileTab": "上传文件",
+        "emailTab": "关联邮件",
+        "placeholder": "在此输入要交给 AI 团队处理的文本内容…",
+        "submit": "提交给 Chief",
+        "uploadHint": "上传文本文件（.txt, .md, .csv）",
+        "loadingEmails": "正在加载邮件列表…",
+        "noEmails": "暂无可关联的邮件"
+      },
+      "download": "下载",
+      "copy": "复制",
+      "downloadPptx": "下载 .pptx",
+      "downloadIcs": "下载 .ics"
+    },
+    "history": {
+      "title": "任务历史",
+      "records": "{{count}} 条任务记录",
+      "noTask": "暂无任务",
+      "selectToView": "选择一条任务查看详情",
+      "backToList": "返回列表",
+      "taskInfo": "任务信息",
+      "copy": "复制内容",
+      "rerun": "重新运行",
+      "source": "任务来源",
+      "time": "下达时间",
+      "subtaskCount": "子任务数",
+      "status": "执行状态",
+      "modelUsed": "使用模型",
+      "noModel": "未记录",
+      "rawInput": "原始输入",
+      "pipeline": "执行管线",
+      "output": "执行产物",
+      "download": "下载",
+      "copilot": "Copilot",
+      "previewTitle": "产物预览",
+      "feedbackTitle": "反馈与微调",
+      "copilotPlaceholder": "告诉 AI 需要修改什么..."
+    },
+    "status": {
+      "COMPLETED": "已完成",
+      "PENDING": "等待中",
+      "RUNNING": "执行中",
+      "FAILED": "失败"
+    },
+    "source": {
+      "EMAIL": "邮件触发",
+      "TEXT_PASTE": "手动输入",
+      "VOICE": "语音输入",
+      "API": "API 调用"
+    },
+    "skills": {
+      "title": "Skill 业务流管理池",
+      "desc": "在这里定义标准的 SOP 和数据流向。将 Toolbox 中的原子工具与 AI Agent 组装起来，形成可复用的技能链路。",
+      "backToList": "返回 Skill 列表",
+      "pipeline": "执行管线"
+    },
+    "settings": {
+      "title": "AI 装配与配置",
+      "desc": "管理 Bristh 多智能体系统的角色设定、人格指令和知识范围",
+      "backToList": "返回列表",
+      "save": "保存配置",
+      "saving": "保存中…",
+      "saveSuccess": "✅ 保存成功",
+      "saveFail": "❌ 保存失败",
+      "networkError": "❌ 网络错误",
+      "basicInfo": "基本信息",
+      "name": "名称",
+      "jobTitle": "职能头衔",
+      "description": "描述",
+      "enableAgent": "启用此 Agent",
+      "outputFormat": "输出格式:",
+      "persona": "人格指令 / System Prompt",
+      "personaLabel": "Persona（系统人格）",
+      "personaHint": "核心身份设定和行为指导",
+      "skillTags": "技能标签",
+      "skillPlaceholder": "输入新技能标签后按回车…",
+      "context": "专属知识库 / Context",
+      "knowledgeScope": "知识范围:",
+      "globalAndPrivate": "🌐 全局 + 🔒 专属",
+      "globalOnly": "🌐 仅全局",
+      "privateDocsCount": "{{count}} 专属文档",
+      "noPrivateDocs": "暂无专属文档，可在 context/ 目录下添加 .md 文件",
+      "configure": "配置",
+      "assembly": "装配",
+      "layeredKb": "🌐+🔒 分层知识",
+      "globalKb": "🌐 全局知识"
+    },
+    "kb": {
+      "title": "统一资产库 (Task Context DB)",
+      "desc": "这里存放着所有系统接收到的原始材料（文本、文件内容、邮件）。它们是被隔离存储的只读资产，不同职能的 Agent 在执行各自专属的派发任务时，都会拉取这些底层数据作为背景。",
+      "empty": "资产库当前为空，尚未接入任何材料。"
+    },
+    "lang": {
+      "toggle": "EN",
+      "label": "语言"
+    }
+  },
   "internal": {
     "title": "内部工作台",
     "back": "← 返回前台大厅",
@@ -61,57 +213,22 @@
       "logout": "退出登录"
     },
     "nav": {
-      "square": {
-        "title": "专家智库",
-        "sub": "政务顾问团"
-      },
-      "chat": {
-        "title": "一答智能体",
-        "sub": "专业数据与决策"
-      },
-      "talent": {
-        "title": "人才检测",
-        "sub": "背景与信用核查"
-      },
-      "kb": {
-        "title": "知识库",
-        "sub": "政策与文档"
-      },
-      "reports": {
-        "title": "报告记录",
-        "sub": "分析与归档"
-      },
-      "roundtable": {
-        "title": "聊天室",
-        "sub": "多端交流"
-      },
-      "apps": {
-        "title": "应用中心",
-        "sub": "生态扩展工具"
-      },
-      "a2a": {
-        "title": "A2A 智能对接",
-        "sub": "跨体任务分发"
-      }
+      "square": { "title": "专家智库", "sub": "政务顾问团" },
+      "chat": { "title": "一答智能体", "sub": "专业数据与决策" },
+      "talent": { "title": "人才检测", "sub": "背景与信用核查" },
+      "kb": { "title": "知识库", "sub": "政策与文档" },
+      "reports": { "title": "报告记录", "sub": "分析与归档" },
+      "roundtable": { "title": "聊天室", "sub": "多端交流" },
+      "apps": { "title": "应用中心", "sub": "生态扩展工具" },
+      "a2a": { "title": "A2A 智能对接", "sub": "跨体任务分发" }
     },
     "new": {
-      "square": {
-        "title": "专家智库",
-        "sub": "打开专家智库选择顾问"
-      },
-      "group": {
-        "title": "新群聊",
-        "sub": "创建多AI圆桌会议"
-      },
-      "kb": {
-        "title": "新知识库",
-        "sub": "上传文档建立知识库"
-      }
+      "square": { "title": "专家智库", "sub": "打开专家智库选择顾问" },
+      "group": { "title": "新群聊", "sub": "创建多AI圆桌会议" },
+      "kb": { "title": "新知识库", "sub": "上传文档建立知识库" }
     }
   },
-  "secretary": {
-    "title": "校长秘书 AI"
-  },
+  "secretary": { "title": "校长秘书 AI" },
   "agency": {
     "title": "留学招生工作室",
     "back": "返回首页",
@@ -133,15 +250,9 @@
         "applications": "待处理申请",
         "conversion": "转化率"
       },
-      "aiTasks": {
-        "title": "AI 任务中心"
-      },
-      "pipeline": {
-        "title": "学员进度管线"
-      },
-      "hotSchools": {
-        "title": "热门院校排行"
-      },
+      "aiTasks": { "title": "AI 任务中心" },
+      "pipeline": { "title": "学员进度管线" },
+      "hotSchools": { "title": "热门院校排行" },
       "quickActions": {
         "title": "AI 快捷操作",
         "match": "智能选校匹配",

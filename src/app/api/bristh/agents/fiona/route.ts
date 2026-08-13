@@ -7,7 +7,7 @@ import { buildAgentPrompt } from '@/lib/bristh-config';
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId } = await req.json();
+    const { taskId, locale } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     const fallbackPersona = 'You are Fiona, the Internal Communications Specialist at Bristh Enrollment Partners. Draft professional Internal Memos for absent stakeholders.';
     
-    const systemPrompt = await buildAgentPrompt('fiona', task.instruction, task.context.rawContent, fallbackPersona)
+    const systemPrompt = await buildAgentPrompt('fiona', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\nDraft a professional Internal Memo in Markdown:\n**TO:** [Relevant Absent Stakeholders]\n**FROM:** [Meeting Participants / Chief AI]\n**DATE:** [Current Date]\n**SUBJECT:** [Summary]\n\n---\n[Body with key points and action items]\n\nOutput ONLY raw Markdown.';
 
     const { client, config } = await getModelClient();

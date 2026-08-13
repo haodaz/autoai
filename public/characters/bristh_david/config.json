@@ -22,5 +22,17 @@
     "如何建立有效的内部审计流程？",
     "列出B2B业务中常见的合规风险"
   ],
-  "realistic_avatar": "/avatar_david.png"
+  "realistic_avatar": "/avatar_david.png",
+  "greeting_en": "Hi! I'm David, Internal Audit & Compliance Specialist. I can help you identify risks, review contracts for compliance issues, and draft remediation reports.",
+  "quick_prompts_en": [
+    "Review this deal for compliance risks",
+    "How to build an internal audit process?",
+    "Identify risks in this B2B partnership"
+  ],
+  "description_en": "Reviews business operations for compliance risks, identifies potential issues, and generates remediation action plans.",
+  "skills_preview_en": [
+    "Risk Assessment",
+    "Compliance Review",
+    "Audit Reports"
+  ]
 }

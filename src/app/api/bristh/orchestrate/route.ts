@@ -39,7 +39,7 @@ async function getSessionUserId(): Promise<string | null> {
 
 export async function POST(req: Request) {
   try {
-    const { source, rawContent } = await req.json();
+    const { source, rawContent, locale } = await req.json();
 
     if (!rawContent) {
       return NextResponse.json({ error: 'Missing rawContent' }, { status: 400 });
@@ -65,6 +65,12 @@ export async function POST(req: Request) {
     const capabilityDict = await loadCapabilityDict();
     const chiefPersona = chiefConfig?.persona || 'You are the Chief Master AI (Task Orchestrator).';
 
+    const langInstruction = locale?.startsWith('zh')
+      ? '\n\n【语言要求】所有 instruction 字段请使用中文撰写。'
+      : locale?.startsWith('en')
+        ? '\n\n【Language Requirement】Write all "instruction" fields in English.'
+        : '';
+
     const systemPrompt = `${chiefPersona}
 
 Here is your Agent Capability Dictionary — use it to decide which agents to dispatch:
@@ -76,7 +82,7 @@ Output format: JSON object with a "tasks" array.
 Each task object must have:
 - "agent": The EXACT name of the agent (e.g. "Alice", "Bob")
 - "instruction": Specific, actionable instruction for this agent based on the input text.
-`;
+${langInstruction}`;
 
     let tasksToCreate = [];
     let parsedJson = {};

@@ -22,5 +22,18 @@
     "如何写好一份有说服力的BP？",
     "给我一个项目企划书的标准模板"
   ],
-  "realistic_avatar": "/avatar_alice.png"
+  "realistic_avatar": "/avatar_alice.png",
+  "greeting_en": "Hi! I'm Alice, Proposal Architect. I specialize in writing business proposals, project plans, and solution architecture docs. Tell me what you need and I'll help you draft it.",
+  "quick_prompts_en": [
+    "Write a business proposal for an EdTech partnership",
+    "How do I write a compelling BP?",
+    "Give me a standard project proposal template"
+  ],
+  "description_en": "Quickly generates structured business proposals, project plans, and solution architecture documents based on client needs and project context.",
+  "skills_preview_en": [
+    "Proposal Writing",
+    "Project Planning",
+    "RAG Search",
+    "Market Analysis"
+  ]
 }

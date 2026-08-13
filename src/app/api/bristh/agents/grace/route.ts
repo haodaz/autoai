@@ -10,7 +10,7 @@ import { buildAgentPrompt } from '@/lib/bristh-config';
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId } = await req.json();
+    const { taskId, locale } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     const fallbackPersona = 'You are Grace, the Email Dispatch Specialist at Bristh Enrollment Partners. Compose and send professional emails with attachments.';
     
-    const systemPrompt = await buildAgentPrompt('grace', task.instruction, task.context.rawContent, fallbackPersona)
+    const systemPrompt = await buildAgentPrompt('grace', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + `\n\nExtract email details. Output ONLY a valid JSON object:
 {
   "to": "recipient email. If none stated, use 'haoz214@gmail.com'",

@@ -11,7 +11,7 @@ export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
-    const { agentId, messages } = await req.json();
+    const { agentId, messages, locale } = await req.json();
 
     if (!agentId) {
       return new Response(JSON.stringify({ error: 'Missing agentId' }), {
@@ -37,7 +37,15 @@ export async function POST(req: Request) {
     systemPrompt += `\nYou are in 1-on-1 chat mode with a user. Be helpful, conversational, and professional.`;
     systemPrompt += `\nWhen the user asks you to perform a concrete task (generate PPT, create calendar, draft email), use the appropriate tool. Do NOT explain what you would do — actually call the tool.`;
     systemPrompt += `\nWhen answering knowledge-related questions, use the searchKnowledgeBase tool if needed.`;
-    systemPrompt += `\nAlways respond in the same language the user uses (Chinese or English).`;
+    const isZh = locale?.startsWith('zh');
+    const isEn = locale?.startsWith('en');
+    if (isZh) {
+      systemPrompt += `\n【语言要求】请始终使用简体中文进行对话和输出，不要使用英文。`;
+    } else if (isEn) {
+      systemPrompt += `\n【Language Requirement】Always respond entirely in English. Do not use Chinese.`;
+    } else {
+      systemPrompt += `\nAlways respond in the same language the user uses (Chinese or English).`;
+    }
 
     if (privateContext) {
       systemPrompt += `\n\nAgent-specific reference knowledge:\n${privateContext}`;

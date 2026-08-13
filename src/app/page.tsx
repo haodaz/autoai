@@ -6,10 +6,12 @@ import { Modal, Tooltip, Spin } from 'antd';
 import { marked } from 'marked';
 import { useAuth } from '@/components/auth/AuthGuard';
 import { canAccessTab } from '@/lib/roles';
+import { useTranslation } from 'react-i18next';
 
 const LogicWhitepaper = lazy(() => import('./logic/page'));
 import AIEmployeesView from '@/components/employees/AIEmployeesView';
 import UserManagementView from '@/components/admin/UserManagementView';
+import VoiceInputButton from '@/components/ui/VoiceInputButton';
 
 // Standalone preview renderer for use outside VirtualOfficeView
 function renderPreviewStandalone(payload: string | null) {
@@ -45,6 +47,7 @@ const COLOR_BORDER_MAP: Record<string, { color: string; shadow: string }> = {
 
 export default function BristhWorkspace() {
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('office');
   // Profile modal
   const [showProfile, setShowProfile] = useState(false);
@@ -140,15 +143,15 @@ export default function BristhWorkspace() {
 
         <nav className="flex-1 py-5 px-3 space-y-1 overflow-y-auto">
           {[
-            { id: 'office', label: '虚拟办公室', icon: Layout },
-            { id: 'employees', label: 'AI员工', icon: Users },
-            { id: 'history', label: '任务历史', icon: History },
-            { id: 'kb', label: '知识库', icon: BookOpen },
-            { id: 'settings', label: 'AI配置与装配', icon: Settings },
-            { id: 'toolbox', label: 'Toolbox 工具箱', icon: Wrench },
-            { id: 'skills', label: 'Skill 管理', icon: PenTool },
-            { id: 'logic', label: '架构白皮书', icon: BookOpen },
-            { id: 'users', label: '用户管理', icon: Users },
+            { id: 'office', label: t('bristh.nav.office'), icon: Layout },
+            { id: 'employees', label: t('bristh.nav.employees'), icon: Users },
+            { id: 'history', label: t('bristh.nav.history'), icon: History },
+            { id: 'kb', label: t('bristh.nav.kb'), icon: BookOpen },
+            { id: 'settings', label: t('bristh.nav.settings'), icon: Settings },
+            { id: 'toolbox', label: t('bristh.nav.toolbox'), icon: Wrench },
+            { id: 'skills', label: t('bristh.nav.skills'), icon: PenTool },
+            { id: 'logic', label: t('bristh.nav.logic'), icon: BookOpen },
+            { id: 'users', label: t('bristh.nav.users'), icon: Users },
           ].filter(tab => canAccessTab(tab.id, user?.role || 'user')).map(tab => (
             <button
               key={tab.id}
@@ -175,7 +178,7 @@ export default function BristhWorkspace() {
               <div className="flex items-center min-w-0">
                 <Cpu className="w-3.5 h-3.5 mr-2 text-indigo-400 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[10px] text-gray-400 font-medium leading-none">当前模型</p>
+                  <p className="text-[10px] text-gray-400 font-medium leading-none">{t('bristh.model.current')}</p>
                   <p className="text-[11px] font-bold text-gray-700 truncate mt-0.5">{currentModel?.name || 'Loading...'}</p>
                 </div>
               </div>
@@ -188,7 +191,7 @@ export default function BristhWorkspace() {
             {modelDropdownOpen && (
               <div className="absolute bottom-full left-0 right-0 mb-1.5 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden">
                 <div className="p-2 border-b border-gray-100">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">切换 AI 模型</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">{t('bristh.model.switch')}</p>
                 </div>
                 <div className="p-1.5">
                   {availableModels.map(m => (
@@ -209,7 +212,7 @@ export default function BristhWorkspace() {
                         <p className="text-[10px] text-gray-400">{m.provider}</p>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {!m.hasKey && <span className="text-[9px] text-red-400 font-medium">无 Key</span>}
+                        {!m.hasKey && <span className="text-[9px] text-red-400 font-medium">{t('bristh.model.noKey')}</span>}
                         {currentModel?.id === m.id && <CheckCircle className="w-3.5 h-3.5 text-indigo-500" />}
                       </div>
                     </button>
@@ -258,6 +261,14 @@ export default function BristhWorkspace() {
               <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* Language Toggle */}
+          <button
+            onClick={() => { const next = i18n.language === 'zh' ? 'en' : 'zh'; i18n.changeLanguage(next); localStorage.setItem('bristh_lang', next); }}
+            className="w-full flex items-center justify-center px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-100 transition-all text-xs font-bold text-gray-500"
+          >
+            🌐 {t('bristh.lang.toggle')}
+          </button>
         </div>
       </div>
 
@@ -272,10 +283,10 @@ export default function BristhWorkspace() {
         destroyOnClose
       >
         <div className="pt-2">
-          <h3 className="text-lg font-black text-gray-900 mb-6">个人资料</h3>
+          <h3 className="text-lg font-black text-gray-900 mb-6">{t('bristh.profile.title')}</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">昵称 / Display Name</label>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('bristh.profile.displayName')}</label>
               <div className="relative">
                 <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -288,7 +299,7 @@ export default function BristhWorkspace() {
               </div>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">手机 / Phone</label>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('bristh.profile.phone')}</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -301,7 +312,7 @@ export default function BristhWorkspace() {
               </div>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">邮箱 / Email</label>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('bristh.profile.email')}</label>
               <div className="relative">
                 <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -314,7 +325,7 @@ export default function BristhWorkspace() {
               </div>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">头像 URL / Avatar</label>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('bristh.profile.avatar')}</label>
               <div className="relative">
                 <Camera className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -359,7 +370,7 @@ export default function BristhWorkspace() {
           <p className="text-center text-[11px] text-gray-400 mt-3">
             账号: <span className="font-bold text-gray-500">{user?.username}</span>
             <span className="mx-2">·</span>
-            角色: <span className="font-bold text-gray-500">{user?.role === 'admin' ? '管理员' : '普通用户'}</span>
+            {t('bristh.profile.role')}: <span className="font-bold text-gray-500">{user?.role === 'admin' ? t('bristh.profile.admin') : t('bristh.profile.user')}</span>
           </p>
         </div>
       </Modal>
@@ -452,12 +463,13 @@ interface LogEntry {
 }
 
 function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopilot?: (data: { slides: any[]; fileUrl: string; topic: string }) => void; onOpenDocCopilot?: (data: { taskId: string; agent: string }) => void }) {
+  const { t, i18n } = useTranslation();
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<'idle' | 'analyzing' | 'dispatching' | 'completed' | 'failed'>('idle');
   const [activeNodes, setActiveNodes] = useState<{agent: string, instruction: string, status: string, taskId: string, depth: number, summary?: string}[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputMode, setInputMode] = useState<'text' | 'file' | 'email'>('text');
-  const [currentTaskDisplay, setCurrentTaskDisplay] = useState('暂无活动任务。点击新增接入任务。');
+  const [currentTaskDisplay, setCurrentTaskDisplay] = useState(t('bristh.office.noTask'));
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   
@@ -623,7 +635,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
       const res = await fetch('/api/bristh/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: 'TEXT', rawContent: input })
+        body: JSON.stringify({ source: 'TEXT', rawContent: input, locale: i18n.language })
       });
       
       const data = await res.json();
@@ -657,7 +669,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
            const agentRes = await fetch(agentEndpoint, {
              method: 'POST',
              headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({ taskId: taskRecord.id })
+             body: JSON.stringify({ taskId: taskRecord.id, locale: i18n.language })
            });
 
            if (!agentRes.ok) {
@@ -776,7 +788,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
       const res = await fetch('/api/bristh/copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId: copilotNode.taskId, message: msg })
+        body: JSON.stringify({ taskId: copilotNode.taskId, message: msg, locale: i18n.language })
       });
       const data = await res.json();
       if (res.ok) {
@@ -925,7 +937,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
   };
 
   return (
-    <div className="w-full h-full flex flex-col md:flex-row overflow-hidden relative">
+    <div className="w-full h-auto md:h-full flex flex-col md:flex-row overflow-visible md:overflow-hidden relative">
       {/* Background Grid */}
       <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#6366f1 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }}></div>
 
@@ -1251,13 +1263,19 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
           </div>
 
           {inputMode === 'text' && (
-            <div>
+            <div className="relative">
               <textarea
-                className="w-full h-40 p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                className="w-full h-40 p-4 pb-10 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
                 placeholder="[Meeting Transcript] Client agreed to proceed. We need a proposal draft, a legal contract, and an internal sync..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
               />
+              <div className="absolute bottom-3 left-3">
+                <VoiceInputButton
+                  onTranscript={(text) => setInput(prev => prev + text)}
+                  lang={i18n.language?.startsWith('zh') ? 'zh-CN' : 'en-US'}
+                />
+              </div>
             </div>
           )}
 
@@ -2283,20 +2301,52 @@ function ToolboxView({ initialPpt, onPptConsumed }: { initialPpt?: { slides: any
 // 3. 技能管理视图 (Skills View)
 // ==========================================
 function SkillsView() {
+  const { t } = useTranslation();
+  const [selectedSkill, setSelectedSkill] = useState<number | null>(null);
+  const skillDetails = [
+    { icon: '🎓', title: '留学咨询标准流', desc: '串联 Alice(方案) -> Edda(宣讲PPT) -> Grace(发送邮件)', pipeline: ['Alice – 方案架构', 'Edda – PPT制作', 'Grace – 邮件分发'] },
+    { icon: '🏢', title: '企业内控流', desc: '串联 David(审查) -> Fiona(通报Memo)', pipeline: ['David – 内控审查', 'Fiona – 通报宣发'] },
+  ];
+  if (selectedSkill !== null) {
+    const s = skillDetails[selectedSkill];
+    return (
+      <div className="w-full h-full bg-white flex flex-col">
+        <div className="p-4 border-b border-gray-100">
+          <button onClick={() => setSelectedSkill(null)} className="flex items-center text-sm text-gray-500 hover:text-gray-800 font-medium">
+            <ChevronLeft className="w-4 h-4 mr-1" /> {t('bristh.skills.backToList')}
+          </button>
+        </div>
+        <div className="flex-1 p-5 md:p-10 overflow-y-auto">
+          <div className="text-4xl mb-3">{s.icon}</div>
+          <h2 className="text-xl font-black text-gray-900 mb-2">{s.title}</h2>
+          <p className="text-gray-500 mb-6">{s.desc}</p>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t('bristh.skills.pipeline')}</h3>
+          <div className="space-y-2">
+            {s.pipeline.map((a, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-sm font-bold text-purple-600">{i+1}</div>
+                <span className="text-sm font-medium text-gray-700">{a}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className="w-full h-full bg-white p-10 flex flex-col items-center justify-center text-center">
+    <div className="w-full h-full bg-white p-4 md:p-10 flex flex-col items-center justify-center text-center">
       <div className="w-24 h-24 bg-purple-50 rounded-full flex items-center justify-center mb-6">
         <PenTool className="w-10 h-10 text-purple-600" />
       </div>
-      <h2 className="text-2xl font-black text-gray-900 mb-2">Skill 业务流管理池</h2>
-      <p className="text-gray-500 max-w-md mb-8">在这里定义标准的 SOP 和数据流向。将 Toolbox 中的原子工具与 AI Agent 组装起来，形成可复用的技能链路。</p>
+      <h2 className="text-2xl font-black text-gray-900 mb-2">{t('bristh.skills.title')}</h2>
+      <p className="text-gray-500 max-w-md mb-8">{t('bristh.skills.desc')}</p>
       
-      <div className="grid grid-cols-2 gap-4 max-w-2xl w-full text-left">
-        <div className="border border-gray-200 p-5 rounded-xl hover:border-purple-500 transition-colors cursor-pointer">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl w-full text-left">
+        <div className="border border-gray-200 p-5 rounded-xl hover:border-purple-500 transition-colors cursor-pointer" onClick={() => setSelectedSkill(0)}>
            <h3 className="font-bold text-gray-800 mb-1">🎓 留学咨询标准流</h3>
            <p className="text-xs text-gray-500">串联 Alice(方案) -> Edda(宣讲PPT) -> Grace(发送邮件)</p>
         </div>
-        <div className="border border-gray-200 p-5 rounded-xl hover:border-purple-500 transition-colors cursor-pointer">
+        <div className="border border-gray-200 p-5 rounded-xl hover:border-purple-500 transition-colors cursor-pointer" onClick={() => setSelectedSkill(1)}>
            <h3 className="font-bold text-gray-800 mb-1">🏢 企业内控流</h3>
            <p className="text-xs text-gray-500">串联 David(审查) -> Fiona(通报Memo)</p>
         </div>
@@ -2309,9 +2359,11 @@ function SkillsView() {
 // Others...
 // ==========================================
 function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopilot?: (data: { slides: any[]; fileUrl: string; topic: string }) => void; onOpenDocCopilot?: (data: { taskId: string; agent: string }) => void }) {
+  const { t, i18n } = useTranslation();
   const [contexts, setContexts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCtx, setSelectedCtx] = useState<any>(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   // Copilot state (self-contained)
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [copilotTask, setCopilotTask] = useState<any>(null);
@@ -2327,17 +2379,17 @@ function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopi
   }, []);
 
   const STATUS_BADGE: Record<string, { bg: string; text: string; label: string; dot: string }> = {
-    COMPLETED: { bg: 'bg-emerald-50', text: 'text-emerald-600', label: '已完成', dot: 'bg-emerald-400' },
-    PENDING: { bg: 'bg-amber-50', text: 'text-amber-600', label: '等待中', dot: 'bg-amber-400' },
-    RUNNING: { bg: 'bg-blue-50', text: 'text-blue-600', label: '执行中', dot: 'bg-blue-400' },
-    FAILED: { bg: 'bg-red-50', text: 'text-red-600', label: '失败', dot: 'bg-red-400' },
+    COMPLETED: { bg: 'bg-emerald-50', text: 'text-emerald-600', label: t('bristh.status.COMPLETED'), dot: 'bg-emerald-400' },
+    PENDING: { bg: 'bg-amber-50', text: 'text-amber-600', label: t('bristh.status.PENDING'), dot: 'bg-amber-400' },
+    RUNNING: { bg: 'bg-blue-50', text: 'text-blue-600', label: t('bristh.status.RUNNING'), dot: 'bg-blue-400' },
+    FAILED: { bg: 'bg-red-50', text: 'text-red-600', label: t('bristh.status.FAILED'), dot: 'bg-red-400' },
   };
 
   const SOURCE_MAP: Record<string, { label: string; icon: string }> = {
-    EMAIL: { label: '邮件触发', icon: '📧' },
-    TEXT_PASTE: { label: '手动输入', icon: '✍️' },
-    VOICE: { label: '语音输入', icon: '🎤' },
-    API: { label: 'API 调用', icon: '🔗' },
+    EMAIL: { label: t('bristh.source.EMAIL'), icon: '📧' },
+    TEXT_PASTE: { label: t('bristh.source.TEXT_PASTE'), icon: '✍️' },
+    VOICE: { label: t('bristh.source.VOICE'), icon: '🎤' },
+    API: { label: t('bristh.source.API'), icon: '🔗' },
   };
 
   const formatTime = (ts: string | number) => {
@@ -2370,7 +2422,7 @@ function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopi
       const res = await fetch('/api/bristh/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: ctx.source, rawContent: ctx.rawContent })
+        body: JSON.stringify({ source: ctx.source, rawContent: ctx.rawContent, locale: i18n.language })
       });
       if (res.ok) {
         // Reload history
@@ -2439,10 +2491,10 @@ function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopi
   return (
     <div className="w-full h-full flex overflow-hidden bg-[#f8f9fc]">
       {/* Left: Task List */}
-      <div className="w-full md:w-80 border-r border-gray-200/80 bg-white flex flex-col shrink-0">
+      <div className={`w-full md:w-80 border-r border-gray-200/80 bg-white flex-col shrink-0 ${mobileDetailOpen ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-gray-100">
           <h2 className="text-sm font-black text-gray-800 flex items-center">
-            <History className="w-4 h-4 mr-2 text-indigo-500" /> 任务历史
+            <History className="w-4 h-4 mr-2 text-indigo-500" /> {t('bristh.history.title')}
           </h2>
           <p className="text-[10px] text-gray-400 mt-0.5">{contexts.length} 条任务记录</p>
         </div>
@@ -2452,7 +2504,7 @@ function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopi
           ) : contexts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 text-gray-400">
               <History className="w-10 h-10 mb-2 opacity-20" />
-              <p className="text-xs">暂无任务</p>
+              <p className="text-xs">{t('bristh.history.noTask')}</p>
             </div>
           ) : (
             contexts.map((ctx: any) => {
@@ -2461,7 +2513,7 @@ function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopi
               const source = SOURCE_MAP[ctx.source] || { label: ctx.source, icon: '📄' };
               const isSelected = selectedCtx?.id === ctx.id;
               return (
-                <button key={ctx.id} onClick={() => setSelectedCtx(ctx)}
+                <button key={ctx.id} onClick={() => { setSelectedCtx(ctx); setMobileDetailOpen(true); }}
                   className={`w-full text-left px-4 py-3 border-b border-gray-50 transition-all ${isSelected ? 'bg-indigo-50/50 border-l-2 border-l-indigo-500' : 'hover:bg-gray-50 border-l-2 border-l-transparent'}`}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-gray-400">{source.icon} {source.label}</span>
@@ -2480,52 +2532,55 @@ function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopi
       </div>
 
       {/* Right: Detail Panel */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className={`flex-1 overflow-y-auto p-4 md:p-6 ${!mobileDetailOpen ? 'hidden md:block' : ''}`}>
+        <button onClick={() => setMobileDetailOpen(false)} className="md:hidden flex items-center text-sm text-gray-500 hover:text-gray-800 font-medium mb-4">
+          <ChevronLeft className="w-4 h-4 mr-1" /> {t('bristh.history.backToList')}
+        </button>
         {!selectedCtx ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <History className="w-16 h-16 mb-4 opacity-20" />
-            <p className="font-medium">选择一条任务查看详情</p>
+            <p className="font-medium">{t('bristh.history.selectToView')}</p>
           </div>
         ) : (
           <div className="max-w-4xl mx-auto space-y-5">
             {/* Card 1: Task Info */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 py-3 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="text-xs font-bold text-gray-600 flex items-center"><FileText className="w-3.5 h-3.5 mr-1.5 text-indigo-400" /> 任务信息</h3>
+                <h3 className="text-xs font-bold text-gray-600 flex items-center"><FileText className="w-3.5 h-3.5 mr-1.5 text-indigo-400" /> {t('bristh.history.taskInfo')}</h3>
                 <div className="flex gap-2">
                   <button onClick={() => copyToClipboard(selectedCtx.rawContent)} className="text-[10px] px-2 py-1 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 font-bold flex items-center gap-1">
-                    <Copy className="w-3 h-3" /> 复制内容
+                    <Copy className="w-3 h-3" /> {t('bristh.history.copy')}
                   </button>
                   <button onClick={() => rerunTask(selectedCtx)} className="text-[10px] px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 font-bold flex items-center gap-1">
-                    <RefreshCw className="w-3 h-3" /> 重新运行
+                    <RefreshCw className="w-3 h-3" /> {t('bristh.history.rerun')}
                   </button>
                 </div>
               </div>
               <div className="p-5 space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">任务来源</p>
+                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">{t('bristh.history.source')}</p>
                     <p className="text-xs font-medium text-gray-700">{(SOURCE_MAP[selectedCtx.source] || {}).icon} {(SOURCE_MAP[selectedCtx.source] || {}).label || selectedCtx.source}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">下达时间</p>
+                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">{t('bristh.history.time')}</p>
                     <p className="text-xs font-medium text-gray-700">{formatDate(selectedCtx.createdAt)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">子任务数</p>
+                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">{t('bristh.history.subtaskCount')}</p>
                     <p className="text-xs font-medium text-gray-700">{(selectedCtx.tasks || []).length} 个</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">执行状态</p>
+                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">{t('bristh.history.status')}</p>
                     {(() => { const s = STATUS_BADGE[getOverallStatus(selectedCtx.tasks || [])] || STATUS_BADGE.PENDING; return <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${s.bg} ${s.text}`}>{s.label}</span>; })()}
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">使用模型</p>
-                    <p className="text-xs font-medium text-gray-700">{selectedCtx.modelUsed || <span className="text-gray-300">未记录</span>}</p>
+                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">{t('bristh.history.modelUsed')}</p>
+                    <p className="text-xs font-medium text-gray-700">{selectedCtx.modelUsed || <span className="text-gray-300">{t('bristh.history.noModel')}</span>}</p>
                   </div>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-[10px] font-bold text-gray-400 mb-1">原始输入</p>
+                  <p className="text-[10px] font-bold text-gray-400 mb-1">{t('bristh.history.rawInput')}</p>
                   <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">{selectedCtx.rawContent}</p>
                 </div>
               </div>
@@ -2534,7 +2589,7 @@ function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopi
             {/* Card 2: Pipeline Timeline */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 py-3 bg-gray-50/80 border-b border-gray-100">
-                <h3 className="text-xs font-bold text-gray-600 flex items-center"><GitMerge className="w-3.5 h-3.5 mr-1.5 text-violet-400" /> 执行管线</h3>
+                <h3 className="text-xs font-bold text-gray-600 flex items-center"><GitMerge className="w-3.5 h-3.5 mr-1.5 text-violet-400" /> {t('bristh.history.pipeline')}</h3>
               </div>
               <div className="p-5">
                 <div className="flex items-center gap-1 overflow-x-auto pb-2">
@@ -2688,6 +2743,7 @@ function TaskHistoryView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCopi
 }
 
 function KnowledgeBaseView() {
+  const { t } = useTranslation();
   const [contexts, setContexts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -2714,10 +2770,10 @@ function KnowledgeBaseView() {
     <div className="w-full h-full bg-[#f8faf9] flex overflow-hidden">
       <div className="flex-1 p-4 md:p-10 overflow-y-auto">
         <h2 className="text-2xl font-black text-gray-800 mb-6 flex items-center">
-          <Database className="w-6 h-6 mr-3 text-blue-600" /> 统一资产库 (Task Context DB)
+          <Database className="w-6 h-6 mr-3 text-blue-600" /> {t('bristh.kb.title')}
         </h2>
         <p className="text-gray-500 mb-8 max-w-3xl">
-          这里存放着所有系统接收到的原始材料（文本、文件内容、邮件）。它们是被隔离存储的只读资产，不同职能的 Agent 在执行各自专属的派发任务时，都会拉取这些底层数据作为背景。
+          {t('bristh.kb.desc')}
         </p>
 
         {loading ? (
@@ -2727,7 +2783,7 @@ function KnowledgeBaseView() {
         ) : contexts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400">
             <BookOpen className="w-16 h-16 mb-4 opacity-50" />
-            <p>资产库当前为空，尚未接入任何材料。</p>
+            <p>{t('bristh.kb.empty')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
