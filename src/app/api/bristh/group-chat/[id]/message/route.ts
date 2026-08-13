@@ -40,6 +40,19 @@ export async function POST(
     const mentionedNames = mentionMatches.map(m => m[1].trim().toLowerCase());
     
     let respondingAgentIds = participants;
+    
+    // Sort responding agents based on speakingOrder if defined
+    if (chat.speakingOrder && chat.speakingOrder.length > 0) {
+      respondingAgentIds.sort((a, b) => {
+        const idxA = chat.speakingOrder.indexOf(a);
+        const idxB = chat.speakingOrder.indexOf(b);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return 0;
+      });
+    }
+
     if (mentionedNames.length > 0) {
       const filtered = participants.filter(agentId => {
         const config = allAgents.find(a => a.id === agentId);

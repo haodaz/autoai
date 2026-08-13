@@ -112,8 +112,10 @@ model Task {
 
 model GroupChat {
   id           String                 @id @default(cuid())
-  name         String
-  topic        String?
+  name           String
+  topic          String?
+  responseLength String                 @default("moderate") // short, moderate, detailed, unlimited
+  speakingOrder  String[]
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
   participants GroupChatParticipant[]

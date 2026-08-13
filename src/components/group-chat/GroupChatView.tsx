@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Spin, Modal, Checkbox, message, Popconfirm } from 'antd';
-import { Send, Plus, Users, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Send, Plus, Users, Trash2, CheckCircle, XCircle, Settings, ArrowUp, ArrowDown } from 'lucide-react';
 
 // ── 聊天大厅卡片 ──
 function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) => void, allAgents: any[] }) {
@@ -178,17 +178,36 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [agentTyping, setAgentTyping] = useState<{ id: string, name: string } | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  
+  // Settings State
+  const [speakingOrder, setSpeakingOrder] = useState<string[]>([]);
+  const [responseLength, setResponseLength] = useState('moderate');
+  const [mentionMenu, setMentionMenu] = useState<{ visible: boolean, filter: string }>({ visible: false, filter: '' });
+  
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const fetchChat = () => {
     fetch(`/api/bristh/group-chat/${chatId}`)
       .then(res => res.json())
       .then(data => {
         setChatInfo(data);
         setMessages(data.messages || []);
+        
+        let order = data.speakingOrder || [];
+        const parts = data.participants.map((p: any) => p.agentId).filter((id: string) => id !== 'USER');
+        // Ensure all participants are in order array
+        parts.forEach((p: string) => { if (!order.includes(p)) order.push(p); });
+        order = order.filter((p: string) => parts.includes(p)); // filter out removed
+        
+        setSpeakingOrder(order);
+        setResponseLength(data.responseLength || 'moderate');
         scrollToBottom();
       });
-  }, [chatId]);
+  };
+
+  useEffect(() => { fetchChat(); }, [chatId]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -200,6 +219,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
     if (!input.trim() || sending) return;
     const msgText = input;
     setInput('');
+    setMentionMenu({ visible: false, filter: '' });
     setSending(true);
 
     try {
@@ -265,87 +285,263 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
     }
   };
 
+  const handleSaveSettings = async () => {
+    try {
+      await fetch(`/api/bristh/group-chat/${chatId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ speakingOrder, responseLength })
+      });
+      message.success('设置已保存');
+      setSettingsOpen(false);
+      fetchChat();
+    } catch (e) {
+      message.error('保存失败');
+    }
+  };
+
+  const moveOrder = (id: string, dir: number) => {
+    setSpeakingOrder(prev => {
+      const arr = [...prev];
+      const idx = arr.indexOf(id);
+      if (idx < 0) return arr;
+      if (dir === -1 && idx === 0) return arr;
+      if (dir === 1 && idx === arr.length - 1) return arr;
+      [arr[idx], arr[idx + dir]] = [arr[idx + dir], arr[idx]];
+      return arr;
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInput(val);
+    const lastAtIdx = val.lastIndexOf('@');
+    if (lastAtIdx !== -1 && !val.substring(lastAtIdx).includes(' ')) {
+      setMentionMenu({ visible: true, filter: val.substring(lastAtIdx + 1).toLowerCase() });
+    } else {
+      setMentionMenu({ visible: false, filter: '' });
+    }
+  };
+
   if (!chatInfo) return <div className="flex h-full items-center justify-center"><Spin size="large"/></div>;
 
-  const participantsInfo = chatInfo.participants.map((p: any) => allAgents.find(a => a.id === p.agentId)).filter(Boolean);
+  const participantsInfo = speakingOrder.map(id => allAgents.find(a => a.id === id)).filter(Boolean);
+  // for @ mention menu
+  const mentionCandidates = participantsInfo.filter((a: any) => 
+    a.name.toLowerCase().includes(mentionMenu.filter) || 
+    a.id.toLowerCase().includes(mentionMenu.filter) || 
+    (a.title && a.title.toLowerCase().includes(mentionMenu.filter))
+  );
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
-        <div className="flex items-center">
-          <button onClick={onBack} className="mr-4 text-gray-400 hover:text-gray-700">返回</button>
-          <h2 className="text-xl font-black text-gray-800">{chatInfo.name}</h2>
-          <span className="ml-3 text-xs font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full">
-            {participantsInfo.length} Agents
-          </span>
+    <div className="flex h-full bg-white relative">
+      {/* Left Sidebar */}
+      <div className="w-64 border-r border-gray-100 bg-gray-50 flex flex-col hidden md:flex shrink-0">
+        <div className="p-4 border-b border-gray-200">
+          <button onClick={onBack} className="text-gray-500 hover:text-gray-800 text-sm font-bold flex items-center mb-4 transition-colors">
+            ← 返回大厅
+          </button>
+          <h2 className="font-black text-gray-900 text-lg truncate">{chatInfo.name}</h2>
+          <div className="text-xs text-gray-500 mt-1 font-medium">{participantsInfo.length} Agents participating</div>
         </div>
-        <div className="flex -space-x-2">
-          {participantsInfo.map((a: any) => (
-            <div key={a.id} className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 overflow-hidden" title={a.name}>
-              {a.avatar ? <img src={a.avatar} className="w-full h-full object-cover"/> : a.name[0]}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {participantsInfo.map((a: any, idx: number) => (
+            <div key={a.id} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex items-center gap-3 relative">
+              <div className="absolute -top-2 -left-2 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm z-10">{idx + 1}</div>
+              <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                {a.avatar ? <img src={a.avatar} className="w-full h-full object-cover"/> : <span className="flex items-center justify-center h-full w-full font-bold text-gray-500">{a.name[0]}</span>}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-gray-900 text-sm truncate">{a.name}</div>
+                <div className="text-xs text-gray-500 truncate">{a.title || a.role}</div>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
-        {messages.map((msg, idx) => {
-          const isUser = msg.senderId === 'USER';
-          const agentInfo = allAgents.find(a => a.id === msg.senderId);
-          
-          return (
-            <div key={msg.id || idx} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-              <div className={`flex max-w-[80%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end gap-3`}>
-                <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex justify-center items-center font-bold text-gray-500">
-                  {isUser ? 'U' : (agentInfo?.avatar ? <img src={agentInfo.avatar} className="w-full h-full object-cover"/> : agentInfo?.name?.[0])}
-                </div>
-                <div>
-                  {!isUser && <div className="text-xs font-bold text-gray-500 mb-1 ml-1">{agentInfo?.name}</div>}
-                  <div className={`px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed ${isUser ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'}`}>
-                    {msg.content}
-                    {msg.content.includes('Please confirm and I will execute it') && (
-                      <div className="mt-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-between">
-                        <span className="text-indigo-800 font-bold flex items-center text-xs"><CheckCircle className="w-4 h-4 mr-1 text-indigo-500"/> Action Requested</span>
-                        <div className="space-x-2">
-                          <button className="px-3 py-1 bg-white text-gray-600 font-bold text-xs rounded shadow-sm hover:text-red-500">Decline</button>
-                          <button className="px-3 py-1 bg-indigo-600 text-white font-bold text-xs rounded shadow-sm hover:bg-indigo-700">Approve & Execute</button>
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-white relative">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shadow-sm z-10 shrink-0">
+          <div className="flex items-center md:hidden">
+            <button onClick={onBack} className="mr-4 text-gray-400 font-bold hover:text-gray-800">返回</button>
+            <h2 className="text-lg font-black truncate">{chatInfo.name}</h2>
+          </div>
+          <div className="hidden md:block text-sm font-bold text-gray-500 truncate mr-4">
+            {chatInfo.topic || 'Roundtable Discussion'}
+          </div>
+          <button 
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-bold shrink-0"
+          >
+            <Settings className="w-4 h-4" /> 设置
+          </button>
+        </div>
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
+          {messages.map((msg, idx) => {
+            const isUser = msg.senderId === 'USER';
+            const agentInfo = allAgents.find(a => a.id === msg.senderId);
+            
+            return (
+              <div key={msg.id || idx} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                <div className={`flex max-w-[80%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end gap-3`}>
+                  <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex justify-center items-center font-bold text-gray-500">
+                    {isUser ? 'U' : (agentInfo?.avatar ? <img src={agentInfo.avatar} className="w-full h-full object-cover"/> : agentInfo?.name?.[0])}
+                  </div>
+                  <div>
+                    {!isUser && <div className="text-xs font-bold text-gray-500 mb-1 ml-1">{agentInfo?.name}</div>}
+                    <div className={`px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed ${isUser ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'}`}>
+                      {msg.content}
+                      {msg.content.includes('Please confirm and I will execute it') && (
+                        <div className="mt-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-between">
+                          <span className="text-indigo-800 font-bold flex items-center text-xs"><CheckCircle className="w-4 h-4 mr-1 text-indigo-500"/> Action Requested</span>
+                          <div className="space-x-2">
+                            <button className="px-3 py-1 bg-white text-gray-600 font-bold text-xs rounded shadow-sm hover:text-red-500">Decline</button>
+                            <button className="px-3 py-1 bg-indigo-600 text-white font-bold text-xs rounded shadow-sm hover:bg-indigo-700">Approve & Execute</button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
+            );
+          })}
+          {agentTyping && (
+            <div className="flex justify-start">
+              <div className="flex items-center bg-white px-4 py-3 rounded-full shadow-sm border border-gray-100 text-sm text-gray-500 font-bold">
+                <Spin size="small" className="mr-2" /> {agentTyping.name} is typing...
+              </div>
             </div>
-          );
-        })}
-        {agentTyping && (
-          <div className="flex justify-start">
-            <div className="flex items-center bg-white px-4 py-3 rounded-full shadow-sm border border-gray-100 text-sm text-gray-500 font-bold">
-              <Spin size="small" className="mr-2" /> {agentTyping.name} is typing...
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <div className="p-4 bg-white border-t border-gray-100">
-        <div className="flex items-center gap-2">
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
-            disabled={sending}
-            placeholder="Type a message... Use @ to mention specific AI."
-            className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
-          />
-          <button 
-            onClick={handleSend}
-            disabled={sending || !input.trim()}
-            className="w-12 h-12 flex items-center justify-center bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm transition-colors"
-          >
-            <Send className="w-5 h-5" />
-          </button>
+        {/* Input Area */}
+        <div className="p-4 bg-white border-t border-gray-100 relative shrink-0">
+          {/* Mention Popover */}
+          {mentionMenu.visible && mentionCandidates.length > 0 && (
+            <div className="absolute bottom-full left-4 mb-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+              <div className="bg-gray-50 px-3 py-2 text-xs font-bold text-gray-500 border-b border-gray-100">提到 (Mention)</div>
+              <div className="max-h-48 overflow-y-auto">
+                {mentionCandidates.map((a: any) => (
+                  <button 
+                    key={a.id}
+                    className="w-full text-left px-3 py-2 flex items-center gap-3 hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      const lastAtIdx = input.lastIndexOf('@');
+                      setInput(input.substring(0, lastAtIdx) + `@${a.name} `);
+                      setMentionMenu({ visible: false, filter: '' });
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden shrink-0 border border-gray-100">
+                      {a.avatar ? <img src={a.avatar} className="w-full h-full object-cover"/> : <span className="flex h-full items-center justify-center text-xs font-bold">{a.name[0]}</span>}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold text-gray-900 truncate">{a.name}</div>
+                      <div className="text-[10px] text-gray-500 truncate">{a.title}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              disabled={sending}
+              placeholder="Type a message... Use @ to mention specific AI."
+              className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+            />
+            <button 
+              onClick={handleSend}
+              disabled={sending || !input.trim()}
+              className="w-12 h-12 flex items-center justify-center bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm transition-colors shrink-0"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <Modal
+        title={<div className="text-lg font-black text-gray-800">座谈室设置</div>}
+        open={settingsOpen}
+        onCancel={() => {
+          setSettingsOpen(false);
+          // Revert to fetched state on cancel
+          fetchChat(); 
+        }}
+        footer={null}
+        width={460}
+      >
+        <div className="space-y-6 mt-4">
+          <div>
+            <div className="text-sm font-bold text-gray-700 mb-1">调整发言顺序</div>
+            <div className="text-xs text-gray-400 mb-3">使用箭头调整 AI 依次回复的先后顺序</div>
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50/50">
+              {participantsInfo.map((a: any, idx: number) => (
+                <div key={a.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-5 text-center text-xs font-bold text-gray-400 shrink-0">{idx + 1}</span>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                      {a.avatar ? <img src={a.avatar} className="w-full h-full object-cover"/> : <span className="flex h-full items-center justify-center text-xs font-bold">{a.name[0]}</span>}
+                    </div>
+                    <div className="min-w-0 pr-2">
+                      <div className="font-bold text-sm text-gray-800 truncate">{a.name}</div>
+                      <div className="text-[10px] text-gray-500 truncate">{a.title}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button 
+                      onClick={() => moveOrder(a.id, -1)} 
+                      disabled={idx === 0}
+                      className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                    ><ArrowUp className="w-4 h-4"/></button>
+                    <button 
+                      onClick={() => moveOrder(a.id, 1)} 
+                      disabled={idx === participantsInfo.length - 1}
+                      className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                    ><ArrowDown className="w-4 h-4"/></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <div className="text-sm font-bold text-gray-700 mb-3">AI 回复长度</div>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { val: 'short', label: '简洁', sub: '200字内' },
+                { val: 'moderate', label: '适中', sub: '500字内' },
+                { val: 'detailed', label: '详尽', sub: '1000字' },
+                { val: 'unlimited', label: '不限', sub: '畅所欲言' }
+              ].map(opt => (
+                <button
+                  key={opt.val}
+                  onClick={() => setResponseLength(opt.val)}
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${responseLength === opt.val ? 'border-indigo-500 bg-indigo-50 shadow-sm' : 'border-gray-200 bg-white hover:bg-gray-50'}`}
+                >
+                  <span className={`font-bold text-sm ${responseLength === opt.val ? 'text-indigo-700' : 'text-gray-700'}`}>{opt.label}</span>
+                  <span className={`text-[10px] mt-1 ${responseLength === opt.val ? 'text-indigo-400' : 'text-gray-400'}`}>{opt.sub}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="pt-4 flex justify-end gap-3">
+            <button onClick={() => { setSettingsOpen(false); fetchChat(); }} className="px-5 py-2 text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">取消</button>
+            <button onClick={handleSaveSettings} className="px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">保存设置</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
