@@ -58,7 +58,6 @@ export async function POST(req: Request) {
 Rules:
 - x, y, width, height are percentages (0-100). Ensure x+width<=100 and y+height<=100
 - First slide should be a cover with centered title
-- Limit to max 8 slides to keep it concise
 - Generate unique ids like "s0-title", "s0-body", "s1-title" etc`;
 
     const { client, config } = await getModelClient();
@@ -66,7 +65,7 @@ Rules:
       buildCompletionParams(config, [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: 'Generate the presentation JSON now. Output ONLY valid JSON.' }
-      ], { requireJson: true })
+      ], { requireJson: true, maxTokens: 8192 })
     );
 
     let rawJson = response.choices[0].message.content || '{"think": "", "slides": []}';
