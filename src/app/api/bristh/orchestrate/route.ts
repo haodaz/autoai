@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import fs from 'fs/promises';
 import path from 'path';
+import { cookies } from 'next/headers';
 import { loadAgentConfig } from '@/lib/bristh-config';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 
@@ -23,6 +24,19 @@ async function loadCapabilityDict(): Promise<string> {
   }
 }
 
+// Extract userId from session cookie
+async function getSessionUserId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const raw = cookieStore.get('autoffice_session')?.value;
+    if (!raw) return null;
+    const session = JSON.parse(Buffer.from(raw, 'base64').toString('utf-8'));
+    return session.userId || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { source, rawContent } = await req.json();
@@ -34,11 +48,15 @@ export async function POST(req: Request) {
     // Get current model info to record
     const { config: modelConfig } = await getModelClient();
 
+    // Get current user
+    const userId = await getSessionUserId();
+
     const context = await prisma.taskContext.create({
       data: {
         source: source || 'TEXT_PASTE',
         rawContent,
         modelUsed: modelConfig.name,
+        userId,
       }
     });
 

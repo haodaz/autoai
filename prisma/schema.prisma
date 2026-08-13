@@ -70,14 +70,29 @@ model Meeting {
   customer    Customer? @relation(fields: [customerId], references: [id])
 }
 
+model User {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  passwordHash String
+  role         String       @default("user") // "admin" | "user"
+  displayName  String?
+  phone        String?
+  email        String?
+  avatarUrl    String?
+  createdAt    DateTime     @default(now())
+  taskContexts TaskContext[]
+}
+
 model TaskContext {
   id         String   @id @default(cuid())
   source     String
   rawContent String
   parsedData String?
   modelUsed  String?
+  userId     String?
   createdAt  DateTime @default(now())
   tasks      Task[]
+  user       User?    @relation(fields: [userId], references: [id])
 }
 
 model Task {

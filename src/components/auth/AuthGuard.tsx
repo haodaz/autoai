@@ -1,11 +1,23 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Lock, User, ArrowRight, Zap, Shield } from 'lucide-react';
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
+import { Lock, User, ArrowRight, Shield, UserPlus } from 'lucide-react';
+import type { SessionUser } from '@/lib/roles';
 
-const VALID_USERNAME = 'haoz214';
-const VALID_PASSWORD = '198749';
-const AUTH_KEY = 'autoffice_auth';
+// ── Auth Context ────────────────────────────────────────────────────────────
+
+interface AuthContextValue {
+  user: SessionUser | null;
+  logout: () => void;
+}
+
+export const AuthContext = createContext<AuthContextValue>({ user: null, logout: () => {} });
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+// ── Videos for login background ─────────────────────────────────────────────
 
 const VIDEOS = [
   '/videos/video1.mp4',
@@ -15,57 +27,114 @@ const VIDEOS = [
   '/videos/video5.mp4',
 ];
 
+// ── AuthGuard Component ─────────────────────────────────────────────────────
+
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [checking, setChecking] = useState(true); // initial session check
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Video carousel state
+  // Video carousel
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Check existing session on mount
   useEffect(() => {
-    const stored = localStorage.getItem(AUTH_KEY);
-    setIsAuthed(stored === 'true');
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setUser(data.user))
+      .catch(() => setUser(null))
+      .finally(() => setChecking(false));
   }, []);
 
-  // Video carousel: load & play on index change
+  // Video carousel
   useEffect(() => {
-    if (isAuthed === false && videoRef.current) {
+    if (!user && !checking && videoRef.current) {
       videoRef.current.load();
       videoRef.current.play().catch(() => {});
     }
-  }, [currentVideoIndex, isAuthed]);
+  }, [currentVideoIndex, user, checking]);
 
   const handleVideoEnd = () => {
     setCurrentVideoIndex((prev) => (prev + 1) % VIDEOS.length);
   };
+
+  // ── Login ─────────────────────────────────────────────────────────────────
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    await new Promise(r => setTimeout(r, 600));
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-      localStorage.setItem(AUTH_KEY, 'true');
-      setIsAuthed(true);
-    } else {
-      setError('账号或密码不正确');
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || '登录失败');
+        setIsLoading(false);
+        return;
+      }
+
+      setUser(data.user);
+    } catch {
+      setError('网络错误，请稍后重试');
       setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem(AUTH_KEY);
-    setIsAuthed(false);
+  // ── Register ──────────────────────────────────────────────────────────────
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, displayName: displayName || undefined }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || '注册失败');
+        setIsLoading(false);
+        return;
+      }
+
+      setUser(data.user);
+    } catch {
+      setError('网络错误，请稍后重试');
+      setIsLoading(false);
+    }
   };
 
-  // Hydration check
-  if (isAuthed === null) {
+  // ── Logout ────────────────────────────────────────────────────────────────
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setUser(null);
+    setUsername('');
+    setPassword('');
+    setDisplayName('');
+    setError('');
+    setMode('login');
+  };
+
+  // ── Hydration check ───────────────────────────────────────────────────────
+
+  if (checking) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center space-y-4">
@@ -76,15 +145,23 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Authenticated
-  if (isAuthed) {
-    return <AuthContext.Provider value={{ logout: handleLogout }}>{children}</AuthContext.Provider>;
+  // ── Authenticated ─────────────────────────────────────────────────────────
+
+  if (user) {
+    return (
+      <AuthContext.Provider value={{ user, logout: handleLogout }}>
+        {children}
+      </AuthContext.Provider>
+    );
   }
 
-  // Login screen — light theme with video background
+  // ── Login / Register screen ───────────────────────────────────────────────
+
+  const isLogin = mode === 'login';
+  const onSubmit = isLogin ? handleLogin : handleRegister;
+
   return (
     <div className="h-screen w-screen flex items-center justify-center relative overflow-hidden bg-gray-100">
-
       {/* Background video carousel */}
       <video
         ref={videoRef}
@@ -100,7 +177,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       {/* Light frosted overlay */}
       <div className="absolute top-0 left-0 w-full h-full bg-white/40 backdrop-blur-[3px] z-[1]" />
 
-      {/* Login card */}
+      {/* Card */}
       <div className="relative z-10 w-full max-w-lg mx-4">
         {/* Brand */}
         <div className="text-center mb-8">
@@ -115,12 +192,34 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           </p>
         </div>
 
-        {/* Form card — frosted glass, enlarged */}
+        {/* Form card */}
         <form
-          onSubmit={handleLogin}
+          onSubmit={onSubmit}
           className="bg-white/70 backdrop-blur-2xl border border-white/80 rounded-3xl px-10 py-10 shadow-2xl shadow-black/5"
         >
-          <div className="space-y-6">
+          {/* Mode tabs */}
+          <div className="flex mb-8 bg-gray-100/80 rounded-xl p-1">
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setError(''); }}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                isLogin ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              登录
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('register'); setError(''); }}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                !isLogin ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              注册
+            </button>
+          </div>
+
+          <div className="space-y-5">
             {/* Username */}
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">
@@ -139,6 +238,25 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
+            {/* Display Name (register only) */}
+            {!isLogin && (
+              <div>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                  昵称 / Display Name <span className="text-gray-300">(可选)</span>
+                </label>
+                <div className="relative">
+                  <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-400" />
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Your display name"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/60 border border-gray-200 rounded-xl text-gray-800 text-[15px] font-medium placeholder-gray-300 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Password */}
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">
@@ -151,7 +269,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   placeholder="Enter password"
-                  autoComplete="current-password"
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
                   className="w-full pl-12 pr-4 py-3.5 bg-white/60 border border-gray-200 rounded-xl text-gray-800 text-[15px] font-medium placeholder-gray-300 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all"
                 />
               </div>
@@ -176,14 +294,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <>
-                登 录
+                {isLogin ? '登 录' : '注 册'}
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </>
             )}
           </button>
         </form>
 
-        {/* Footer — powered by HaoAI */}
+        {/* Footer */}
         <p className="text-center text-gray-400/80 text-xs font-medium mt-8 tracking-wider">
           powered by <span className="font-bold text-gray-500">Hao</span><span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">AI</span>
         </p>
@@ -191,6 +309,3 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-// Context for logout, usable by sidebar etc.
-export const AuthContext = React.createContext<{ logout: () => void }>({ logout: () => {} });

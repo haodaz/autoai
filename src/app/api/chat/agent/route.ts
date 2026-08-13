@@ -1,13 +1,13 @@
 import { loadAgentConfig, loadAgentContext } from '@/lib/bristh-config';
-import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { getAgentTools, executeAgentTool } from '@/lib/agent-tools';
+import { getActiveModelConfig } from '@/lib/model-registry';
+import { getAgentTools, executeAgentTool, ToolDefinition } from '@/lib/agent-tools';
 
 // ============================================
 // /api/chat/agent — 1v1 Agent Chat (SSE stream)
-// Mirrors the proven pattern from /api/chat/external
+// Uses proven raw-fetch streaming (same as external/route.ts)
 // ============================================
 
-export const maxDuration = 60; // Vercel function timeout
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     let systemPrompt = config.persona || `You are ${config.name}, an AI assistant at Bristh Enrollment Partners.`;
     systemPrompt += `\n\nYour name is ${config.name}, your title is "${config.title}".`;
     systemPrompt += `\nYou are in 1-on-1 chat mode with a user. Be helpful, conversational, and professional.`;
-    systemPrompt += `\nWhen the user asks you to perform a concrete task (generate PPT, create calendar, draft email), use the appropriate tool.`;
+    systemPrompt += `\nWhen the user asks you to perform a concrete task (generate PPT, create calendar, draft email), use the appropriate tool. Do NOT explain what you would do — actually call the tool.`;
     systemPrompt += `\nWhen answering knowledge-related questions, use the searchKnowledgeBase tool if needed.`;
     systemPrompt += `\nAlways respond in the same language the user uses (Chinese or English).`;
 
@@ -46,8 +46,10 @@ export async function POST(req: Request) {
     // 3. Get tools for this agent
     const tools = getAgentTools(agentId);
 
-    // 4. Get model client
-    const { client, config: modelConfig } = await getModelClient();
+    // 4. Get model config (for API key + base URL)
+    const modelConfig = await getActiveModelConfig();
+    const apiKey = process.env[modelConfig.apiKeyEnv] || '';
+    const baseURL = modelConfig.baseURL;
 
     const encoder = new TextEncoder();
 
@@ -67,18 +69,20 @@ export async function POST(req: Request) {
           ];
 
           let loopCount = 0;
-          const MAX_TOOL_LOOPS = 3;
+          const MAX_TOOL_LOOPS = 5;
 
           while (loopCount < MAX_TOOL_LOOPS) {
             loopCount++;
 
-            // Stream LLM response
-            const result = await streamCompletion(
-              client,
-              modelConfig,
+            // Stream LLM response via raw fetch (proven pattern)
+            const result = await streamRawFetch(
+              baseURL,
+              apiKey,
+              modelConfig.modelName,
               fullMessages,
               tools,
               (token) => emit('delta', { content: token }),
+              modelConfig.provider,
             );
 
             // No tool calls — we're done
@@ -89,7 +93,7 @@ export async function POST(req: Request) {
             // Tool calls detected — execute them
             emit('reset');
 
-            // Add assistant message with tool_calls
+            // Add assistant message with tool_calls to conversation
             fullMessages.push({
               role: 'assistant',
               content: result.content || '',
@@ -161,51 +165,116 @@ export async function POST(req: Request) {
   }
 }
 
-// ── Generic streaming completion using model-registry ───────────────────────
+// ── Raw fetch streaming (proven pattern from external/route.ts) ─────────────
 
-async function streamCompletion(
-  client: any,
-  modelConfig: any,
+async function streamRawFetch(
+  baseURL: string,
+  apiKey: string,
+  model: string,
   messages: any[],
-  tools: any[],
+  tools: ToolDefinition[],
   onToken: (token: string) => void,
+  provider?: string,
 ): Promise<{ content: string; tool_calls?: any[] }> {
-  // Build params using existing model-registry helper
-  const params = buildCompletionParams(modelConfig, messages);
-  params.stream = true;
-  params.tools = tools;
+  // Sanitize messages for the API — preserve tool-related fields
+  const apiMessages = messages.map((m: any) => {
+    const msg: any = { role: m.role, content: m.content };
+    if (m.tool_calls) msg.tool_calls = m.tool_calls;
+    if (m.tool_call_id) msg.tool_call_id = m.tool_call_id;
+    if (m.name) msg.name = m.name;
+    return msg;
+  });
 
-  const response = await client.chat.completions.create(params);
+  // Build request body
+  const body: any = {
+    model,
+    messages: apiMessages,
+    tools,
+    stream: true,
+  };
 
+  // Gemini: disable thinking when tools are used to avoid thought_signature issues
+  if (provider === 'Google' && tools.length > 0) {
+    body.thinking = { thinking_budget: 0 };
+  }
+
+  const response = await fetch(`${baseURL.replace(/\/$/, '')}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[chat/agent] LLM API Error (${response.status}):`, errorText);
+    throw new Error(`LLM API Error ${response.status}: ${errorText.slice(0, 200)}`);
+  }
+
+  if (!response.body) {
+    throw new Error('No response body from LLM');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
   let assistantMessage = '';
   let toolCalls: any[] = [];
+  let buffer = '';
 
-  for await (const chunk of response) {
-    const choice = chunk.choices?.[0];
-    if (!choice) continue;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
 
-    const delta = choice.delta;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
-    // Text content
-    if (delta?.content) {
-      assistantMessage += delta.content;
-      onToken(delta.content);
-    }
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data: ') || trimmed === 'data: [DONE]') continue;
 
-    // Tool calls (streamed incrementally)
-    if (delta?.tool_calls) {
-      for (const tc of delta.tool_calls) {
-        const idx = tc.index ?? 0;
-        if (!toolCalls[idx]) {
-          toolCalls[idx] = {
-            id: tc.id || `call_${idx}`,
-            type: 'function',
-            function: { name: '', arguments: '' },
-          };
+      try {
+        const data = JSON.parse(trimmed.slice(6));
+        const choice = data.choices?.[0];
+        if (!choice) continue;
+
+        const delta = choice.delta;
+
+        // Text content
+        if (delta?.content) {
+          assistantMessage += delta.content;
+          onToken(delta.content);
         }
-        if (tc.id) toolCalls[idx].id = tc.id;
-        if (tc.function?.name) toolCalls[idx].function.name += tc.function.name;
-        if (tc.function?.arguments) toolCalls[idx].function.arguments += tc.function.arguments;
+
+        // Tool calls (streamed incrementally)
+        // IMPORTANT: Preserve ALL fields from the delta (Gemini requires thought_signature)
+        if (delta?.tool_calls) {
+          for (const tc of delta.tool_calls) {
+            const idx = tc.index ?? 0;
+            if (!toolCalls[idx]) {
+              toolCalls[idx] = {
+                id: tc.id || `call_${idx}`,
+                type: 'function',
+                function: { name: '', arguments: '' },
+              };
+            }
+            // Preserve id
+            if (tc.id) toolCalls[idx].id = tc.id;
+            // Accumulate function name and arguments
+            if (tc.function?.name) toolCalls[idx].function.name += tc.function.name;
+            if (tc.function?.arguments) toolCalls[idx].function.arguments += tc.function.arguments;
+            // Preserve any extra fields (e.g. Gemini's thought_signature)
+            for (const key of Object.keys(tc)) {
+              if (!['index', 'id', 'type', 'function'].includes(key)) {
+                toolCalls[idx][key] = tc[key];
+              }
+            }
+          }
+        }
+      } catch {
+        // ignore parse errors on partial chunks
       }
     }
   }

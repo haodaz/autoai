@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { cookies } from 'next/headers';
+
+// Extract session from cookie
+async function getSession(): Promise<{ userId: string; role: string } | null> {
+  try {
+    const cookieStore = await cookies();
+    const raw = cookieStore.get('autoffice_session')?.value;
+    if (!raw) return null;
+    const session = JSON.parse(Buffer.from(raw, 'base64').toString('utf-8'));
+    return { userId: session.userId, role: session.role };
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(req: Request) {
   try {
@@ -7,14 +21,26 @@ export async function GET(req: Request) {
     const contextId = searchParams.get('contextId');
     const mode = searchParams.get('mode');
 
+    // Get current session for data isolation
+    const session = await getSession();
+    const isAdmin = session?.role === 'admin';
+
+    // Build where clause for userId filtering
+    // Admin sees all; User sees only their own + legacy tasks with no userId
+    const userFilter = isAdmin ? {} : { userId: session?.userId || '__none__' };
+
     // History mode: return contexts with their tasks
     if (mode === 'history') {
       const contexts = await prisma.taskContext.findMany({
+        where: userFilter,
         orderBy: { createdAt: 'desc' },
         take: 30,
         include: {
           tasks: {
             orderBy: { createdAt: 'asc' }
+          },
+          user: {
+            select: { username: true, displayName: true }
           }
         }
       });
@@ -23,22 +49,24 @@ export async function GET(req: Request) {
 
     if (!contextId) {
       const tasks = await prisma.task.findMany({
+        where: isAdmin ? {} : { context: userFilter },
         orderBy: { createdAt: 'desc' },
         take: 50,
-        include: { context: true }
+        include: { context: { include: { user: { select: { username: true, displayName: true } } } } }
       });
       return NextResponse.json(tasks);
     }
 
     let targetContextId = contextId;
     if (contextId === 'latest') {
-      const latestTask = await prisma.task.findFirst({
-        orderBy: { createdAt: 'desc' }
+      const latestContext = await prisma.taskContext.findFirst({
+        where: userFilter,
+        orderBy: { createdAt: 'desc' },
       });
-      if (!latestTask) {
+      if (!latestContext) {
         return NextResponse.json([]);
       }
-      targetContextId = latestTask.contextId;
+      targetContextId = latestContext.id;
     }
 
     const tasks = await prisma.task.findMany({

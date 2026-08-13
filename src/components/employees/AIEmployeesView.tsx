@@ -10,6 +10,7 @@ interface AgentConfig {
   title: string;
   description: string;
   avatar: string;
+  realistic_avatar?: string;
   color: string;
   skills_preview: string[];
   role: string;
@@ -77,54 +78,48 @@ export default function AIEmployeesView() {
             <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-fit mx-auto pb-8">
             {agents.map(agent => {
               const colors = COLOR_MAP[agent.color] || COLOR_MAP.blue;
               return (
                 <div
                   key={agent.id}
-                  className={`group relative bg-white rounded-2xl border ${colors.border} overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer`}
+                  className="w-[350px] flex flex-col group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                   onClick={() => setSelectedAgent(agent)}
                 >
-                  {/* Avatar banner */}
-                  <div className={`h-32 bg-gradient-to-br ${colors.gradient} relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-black/5" />
+                  {/* Large Image Header */}
+                  <div className="relative aspect-video w-full overflow-hidden bg-gray-100 shrink-0">
                     <img
-                      src={agent.avatar}
+                      src={agent.realistic_avatar || agent.avatar}
                       alt={agent.name}
-                      className="absolute bottom-0 right-2 h-28 w-28 object-contain drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    {/* Online badge */}
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 bg-white/90 backdrop-blur rounded-full">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 bg-white/90 backdrop-blur rounded-full shadow-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       <span className="text-[10px] font-bold text-gray-700">在线</span>
                     </div>
                   </div>
 
                   {/* Content */}
-                  <div className="p-4">
-                    <h3 className="text-sm font-black text-gray-900 mb-0.5">{agent.name}</h3>
-                    <p className="text-[11px] font-semibold text-gray-400 mb-2">{agent.title}</p>
-                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-3">{agent.description}</p>
+                  <div className="p-5 flex-1 flex flex-col">
+                    {/* Name & Title */}
+                    <h3 className="text-lg font-black text-gray-900 mb-1">{agent.name}</h3>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{agent.title}</p>
 
-                    {/* Skills tags */}
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {agent.skills_preview.slice(0, 3).map(skill => (
-                        <span key={skill} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${colors.tag}`}>
+                    {/* Description */}
+                    <p className="text-[13px] text-gray-500 leading-relaxed line-clamp-2 mb-4">{agent.description}</p>
+
+                    {/* Skills tags (mt-auto pushes it to bottom) */}
+                    <div className="flex flex-wrap gap-1.5 mb-5 mt-auto">
+                      {agent.skills_preview.map(skill => (
+                        <span key={skill} className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-gray-50 text-gray-600 border border-gray-100">
                           {skill}
                         </span>
                       ))}
-                      {agent.skills_preview.length > 3 && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                          +{agent.skills_preview.length - 3}
-                        </span>
-                      )}
                     </div>
 
                     {/* CTA Button */}
-                    <button
-                      className={`w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r ${colors.gradient} text-white rounded-xl text-xs font-bold shadow-lg ${colors.shadow} hover:opacity-90 transition-opacity`}
-                    >
+                    <button className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shrink-0">
                       <MessageSquare className="w-3.5 h-3.5" />
                       开始对话
                     </button>
