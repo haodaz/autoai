@@ -19,7 +19,7 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
       if (!res.ok) {
         const text = await res.text();
         console.error('API Error:', res.status, text);
-        message.error('Failed to load chats');
+        message.error(`Failed to load chats: ${res.status} ${text.substring(0, 50)}`);
         setChats([]);
         return;
       }
@@ -49,14 +49,18 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newChatName, topic: '', agents: selectedAgents })
       });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`API Error: ${text}`);
+      }
       const data = await res.json();
       setCreateModalOpen(false);
       setNewChatName('');
       setSelectedAgents([]);
       fetchChats();
       onEnterChat(data.id);
-    } catch (e) {
-      message.error('创建失败');
+    } catch (e: any) {
+      message.error(e.message || '创建失败');
     } finally {
       setCreating(false);
     }
@@ -148,9 +152,14 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
                       else setSelectedAgents(selectedAgents.filter(id => id !== agent.id));
                     }}
                   />
-                  <div className="ml-3">
-                    <div className="font-bold text-gray-800 text-sm">{agent.name}</div>
-                    <div className="text-xs text-gray-500">{agent.role}</div>
+                  <div className="ml-3 flex items-center">
+                    <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 overflow-hidden shadow-sm mr-3">
+                      {agent.avatar ? <img src={agent.avatar} className="w-full h-full object-cover"/> : agent.name[0]}
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-800 text-sm">{agent.name}</div>
+                      <div className="text-xs text-gray-500">{agent.title || agent.description?.substring(0, 20)}</div>
+                    </div>
                   </div>
                 </label>
               ))}
