@@ -16,8 +16,20 @@ function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) 
   const fetchChats = async () => {
     try {
       const res = await fetch('/api/bristh/group-chat');
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('API Error:', res.status, text);
+        message.error('Failed to load chats');
+        setChats([]);
+        return;
+      }
       const data = await res.json();
-      setChats(data);
+      if (Array.isArray(data)) {
+        setChats(data);
+      } else {
+        console.error('Expected array but got:', data);
+        setChats([]);
+      }
     } catch (e) {
       console.error(e);
     } finally {
