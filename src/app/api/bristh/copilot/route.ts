@@ -131,13 +131,15 @@ Use the Slide[] element-level format. Each slide has backgroundColor and element
       });
 
       const fileName = `Edda_PPT_${Date.now()}.pptx`;
-      const filePath = path.join(process.cwd(), 'public', 'downloads', fileName);
+      const tmpDir = path.join('/tmp', 'bristh-downloads');
+      await fs.mkdir(tmpDir, { recursive: true });
+      const filePath = path.join(tmpDir, fileName);
       const buffer = await pptx.write({ outputType: 'nodebuffer' }) as Buffer;
       await fs.writeFile(filePath, buffer);
 
       finalPayload = JSON.stringify({
         summary: `已根据您的要求更新 PPT，共 ${result.slides.length} 页。`,
-        fileUrl: `/downloads/${fileName}`,
+        fileUrl: `/api/bristh/download?file=${fileName}`,
         rawSlides: result.slides // Element-level format for WYSIWYG canvas
       });
     }

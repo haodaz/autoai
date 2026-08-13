@@ -60,8 +60,8 @@ export const MODEL_REGISTRY: Record<string, ModelConfig> = {
   },
 };
 
-// File to persist model selection (server-side)
-const SELECTION_FILE = path.join(process.cwd(), 'public', 'model-selection.json');
+// File to persist model selection (server-side) — use /tmp for deployed environments
+const SELECTION_FILE = path.join('/tmp', 'bristh-model-selection.json');
 
 /**
  * Get the currently selected model ID.

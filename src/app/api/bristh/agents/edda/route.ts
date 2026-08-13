@@ -171,12 +171,14 @@ Rules:
     });
 
     const fileName = `Edda_PPT_${Date.now()}.pptx`;
-    const filePath = path.join(process.cwd(), 'public', 'downloads', fileName);
+    const tmpDir = path.join('/tmp', 'bristh-downloads');
+    await fs.mkdir(tmpDir, { recursive: true });
+    const filePath = path.join(tmpDir, fileName);
     
     const buffer = await pptx.write({ outputType: 'nodebuffer' }) as Buffer;
     await fs.writeFile(filePath, buffer);
 
-    const fileUrl = `/downloads/${fileName}`;
+    const fileUrl = `/api/bristh/download?file=${fileName}`;
 
     const resultPayload = JSON.stringify({
         summary: `成功生成 PPTX 文件，共包含 ${slides.length} 页幻灯片。`,
