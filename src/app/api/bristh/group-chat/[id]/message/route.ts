@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { ALL_AGENTS } from '@/lib/bristh-config';
+import { loadAllAgentConfigs } from '@/lib/bristh-config';
 
 // Convert Next.js App Router Request to a readable stream for SSE
 export async function POST(
@@ -34,6 +34,7 @@ export async function POST(
     });
 
     // 2. Identify responding agents
+    const allAgents = await loadAllAgentConfigs();
     const participants = chat.participants.map(p => p.agentId).filter(id => id !== 'USER');
     const mentionMatches = [...message.matchAll(/@([^\s@，。！？,.!?《》【】、]+)/g)];
     const mentionedNames = mentionMatches.map(m => m[1].trim().toLowerCase());
@@ -41,7 +42,7 @@ export async function POST(
     let respondingAgentIds = participants;
     if (mentionedNames.length > 0) {
       const filtered = participants.filter(agentId => {
-        const config = ALL_AGENTS.find(a => a.id === agentId);
+        const config = allAgents.find(a => a.id === agentId);
         if (!config) return false;
         return mentionedNames.some(n => 
           config.name.toLowerCase().includes(n) || 
@@ -68,7 +69,7 @@ export async function POST(
 
           for (let i = 0; i < respondingAgentIds.length; i++) {
             const agentId = respondingAgentIds[i];
-            const agentConfig = ALL_AGENTS.find(a => a.id === agentId);
+            const agentConfig = allAgents.find(a => a.id === agentId);
             if (!agentConfig) continue;
 
             const isFirst = i === 0;
@@ -110,7 +111,7 @@ Keep your responses concise, conversational, and fit for a group chat (1-2 short
                 if (h.senderId === agentId) {
                   messagesForLLM.push({ role: 'assistant', content: h.content });
                 } else {
-                  const colleague = ALL_AGENTS.find(a => a.id === h.senderId);
+                  const colleague = allAgents.find(a => a.id === h.senderId);
                   const cName = colleague ? colleague.name : 'A colleague';
                   messagesForLLM.push({ role: 'user', content: `[${cName}]: ${h.content}` });
                 }

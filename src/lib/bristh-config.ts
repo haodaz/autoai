@@ -86,3 +86,30 @@ export async function buildAgentPrompt(
   
   return prompt;
 }
+
+/**
+ * Read all bristh agent configs.
+ */
+export async function loadAllAgentConfigs(): Promise<BristhAgentConfig[]> {
+  try {
+    const charsDir = path.join(process.cwd(), 'public', 'characters');
+    const entries = await fs.readdir(charsDir, { withFileTypes: true });
+    const bristhDirs = entries.filter(e => e.isDirectory() && e.name.startsWith('bristh_'));
+    
+    const configs = await Promise.all(
+      bristhDirs.map(async (dir) => {
+        try {
+          const raw = await fs.readFile(path.join(charsDir, dir.name, 'config.json'), 'utf-8');
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      })
+    );
+    
+    return configs.filter(Boolean) as BristhAgentConfig[];
+  } catch (err) {
+    console.error('Failed to load all agent configs:', err);
+    return [];
+  }
+}

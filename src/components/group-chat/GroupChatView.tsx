@@ -3,10 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Spin, Modal, Checkbox, message, Popconfirm } from 'antd';
 import { Send, Plus, Users, Trash2, CheckCircle, XCircle } from 'lucide-react';
-import { ALL_AGENTS } from '@/lib/bristh-config';
 
 // ── 聊天大厅卡片 ──
-function GroupChatLobby({ onEnterChat }: { onEnterChat: (id: string) => void }) {
+function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) => void, allAgents: any[] }) {
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -88,7 +87,7 @@ function GroupChatLobby({ onEnterChat }: { onEnterChat: (id: string) => void }) 
             <h3 className="text-lg font-bold text-gray-800 mb-2">{chat.name}</h3>
             <div className="flex gap-2 mb-4">
               {chat.participants.map((p: any) => {
-                const agent = ALL_AGENTS.find(a => a.id === p.agentId);
+                const agent = allAgents.find(a => a.id === p.agentId);
                 if (!agent) return null;
                 return (
                   <div key={p.id} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 border border-gray-200" title={agent.name}>
@@ -128,7 +127,7 @@ function GroupChatLobby({ onEnterChat }: { onEnterChat: (id: string) => void }) 
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">选择参与的 AI 员工</label>
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {ALL_AGENTS.map(agent => (
+              {allAgents.map(agent => (
                 <label key={agent.id} className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-100">
                   <Checkbox 
                     checked={selectedAgents.includes(agent.id)}
@@ -152,7 +151,7 @@ function GroupChatLobby({ onEnterChat }: { onEnterChat: (id: string) => void }) 
 }
 
 // ── 聊天室窗口 ──
-function ChatRoom({ chatId, onBack }: { chatId: string, onBack: () => void }) {
+function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () => void, allAgents: any[] }) {
   const [chatInfo, setChatInfo] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -247,7 +246,7 @@ function ChatRoom({ chatId, onBack }: { chatId: string, onBack: () => void }) {
 
   if (!chatInfo) return <div className="flex h-full items-center justify-center"><Spin size="large"/></div>;
 
-  const participantsInfo = chatInfo.participants.map((p: any) => ALL_AGENTS.find(a => a.id === p.agentId)).filter(Boolean);
+  const participantsInfo = chatInfo.participants.map((p: any) => allAgents.find(a => a.id === p.agentId)).filter(Boolean);
 
   return (
     <div className="flex flex-col h-full bg-white relative">
@@ -271,7 +270,7 @@ function ChatRoom({ chatId, onBack }: { chatId: string, onBack: () => void }) {
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
         {messages.map((msg, idx) => {
           const isUser = msg.senderId === 'USER';
-          const agentInfo = ALL_AGENTS.find(a => a.id === msg.senderId);
+          const agentInfo = allAgents.find(a => a.id === msg.senderId);
           
           return (
             <div key={msg.id || idx} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -332,9 +331,22 @@ function ChatRoom({ chatId, onBack }: { chatId: string, onBack: () => void }) {
 
 export default function GroupChatView() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [allAgents, setAllAgents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/bristh/agents/config')
+      .then(res => res.json())
+      .then(data => {
+        setAllAgents(data.filter((a: any) => a.role !== 'orchestrator' && a.enabled));
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div className="flex h-full items-center justify-center"><Spin size="large"/></div>;
 
   if (activeChatId) {
-    return <ChatRoom chatId={activeChatId} onBack={() => setActiveChatId(null)} />;
+    return <ChatRoom chatId={activeChatId} onBack={() => setActiveChatId(null)} allAgents={allAgents} />;
   }
-  return <GroupChatLobby onEnterChat={setActiveChatId} />;
+  return <GroupChatLobby onEnterChat={setActiveChatId} allAgents={allAgents} />;
 }
