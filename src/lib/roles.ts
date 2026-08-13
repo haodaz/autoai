@@ -16,6 +16,7 @@ export interface SessionUser {
 export const TAB_PERMISSIONS: Record<string, UserRole[]> = {
   office:    ['admin', 'user'],
   employees: ['admin', 'user'],
+  group_chat:['admin', 'user'],
   history:   ['admin', 'user'],
   kb:        ['admin', 'user'],
   settings:  ['admin'],
