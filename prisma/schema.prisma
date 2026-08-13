@@ -109,3 +109,35 @@ model Task {
   toolCallsLog   String?
   context        TaskContext @relation(fields: [contextId], references: [id])
 }
+
+model GroupChat {
+  id           String                 @id @default(cuid())
+  name         String
+  topic        String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  participants GroupChatParticipant[]
+  messages     GroupChatMessage[]
+}
+
+model GroupChatParticipant {
+  id          String    @id @default(cuid())
+  groupChatId String
+  agentId     String    // e.g. "alice", "bob", "USER"
+  joinedAt    DateTime  @default(now())
+  groupChat   GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+
+  @@unique([groupChatId, agentId])
+}
+
+model GroupChatMessage {
+  id          String    @id @default(cuid())
+  groupChatId String
+  senderId    String    // The agentId or "USER"
+  role        String    // "user" | "ai" | "system"
+  content     String
+  thinkLog    String?
+  toolCalls   String?   // JSON string to store execution requests/results
+  createdAt   DateTime  @default(now())
+  groupChat   GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+}

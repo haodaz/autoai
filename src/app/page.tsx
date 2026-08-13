@@ -11,6 +11,9 @@ import { useTranslation } from 'react-i18next';
 const LogicWhitepaper = lazy(() => import('./logic/page'));
 import AIEmployeesView from '@/components/employees/AIEmployeesView';
 import UserManagementView from '@/components/admin/UserManagementView';
+import ToolboxView from '@/components/toolbox/ToolboxView';
+import GroupChatView from '@/components/group-chat/GroupChatView';
+import SkillsView from '@/components/skills/SkillsView';
 import VoiceInputButton from '@/components/ui/VoiceInputButton';
 
 // Standalone preview renderer for use outside VirtualOfficeView
@@ -145,6 +148,7 @@ export default function BristhWorkspace() {
           {[
             { id: 'office', label: t('bristh.nav.office'), icon: Layout },
             { id: 'employees', label: t('bristh.nav.employees'), icon: Users },
+            { id: 'group_chat', label: t('bristh.nav.group_chat', 'AI 群聊'), icon: MessageSquare },
             { id: 'history', label: t('bristh.nav.history'), icon: History },
             { id: 'kb', label: t('bristh.nav.kb'), icon: BookOpen },
             { id: 'settings', label: t('bristh.nav.settings'), icon: Settings },
@@ -385,6 +389,7 @@ export default function BristhWorkspace() {
             <VirtualOfficeView onOpenPptCopilot={(data) => { setPendingPptData(data); setActiveTab('toolbox'); }} onOpenDocCopilot={(data) => setCopilotView(data)} />
           </div>
           {activeTab === 'employees' && <AIEmployeesView />}
+          {activeTab === 'group_chat' && <GroupChatView />}
           {activeTab === 'history' && <TaskHistoryView onOpenPptCopilot={(data) => { setPendingPptData(data); setActiveTab('toolbox'); }} onOpenDocCopilot={(data) => setCopilotView(data)} />}
           {activeTab === 'kb' && <KnowledgeBaseView />}
           {activeTab === 'settings' && <AISettingsView />}
