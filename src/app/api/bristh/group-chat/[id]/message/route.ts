@@ -117,6 +117,7 @@ export async function POST(
 Be highly professional and stay strictly in your character's role (${agentConfig.role}). 
 You can agree or disagree with other colleagues based on your professional background. Do not argue pointlessly, but if a colleague suggests something that violates your professional domain (e.g. legal risks, high costs, bad scheduling), you should politely but firmly point it out.
 IMPORTANT: Do NOT prefix your response with your own name (e.g. do not write "[${agentConfig.name}]:"). Reply directly with your message content.
+CRITICAL: You are ONLY playing the role of ${agentConfig.name}. Do NOT generate dialogue or responses for other colleagues (e.g. do not write "[David补充]:"). Stop generating immediately after your own thought is complete!
 ${lengthInstruction}`;
 
             messagesForLLM.push({ 
