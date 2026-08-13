@@ -39,7 +39,7 @@ export async function POST(
     const mentionMatches = [...message.matchAll(/@([^\s@，。！？,.!?《》【】、]+)/g)];
     const mentionedNames = mentionMatches.map(m => m[1].trim().toLowerCase());
     
-    let respondingAgentIds = participants;
+    let respondingAgentIds = [...participants];
     
     // Sort responding agents based on speakingOrder if defined
     if (chat.speakingOrder && chat.speakingOrder.length > 0) {
@@ -54,12 +54,13 @@ export async function POST(
     }
 
     if (mentionedNames.length > 0) {
-      const filtered = participants.filter(agentId => {
+      const filtered = respondingAgentIds.filter(agentId => {
         const config = allAgents.find(a => a.id === agentId);
         if (!config) return false;
         return mentionedNames.some(n => 
           config.name.toLowerCase().includes(n) || 
           config.id.toLowerCase().includes(n) ||
+          (config.title && config.title.toLowerCase().includes(n)) ||
           config.role.toLowerCase().includes(n)
         );
       });
@@ -103,12 +104,20 @@ export async function POST(
             const messagesForLLM: {role: string, content: string}[] = [];
             
             // Add system prompt
+            // Determine length instruction
+            let lengthInstruction = '';
+            if (chat.responseLength === 'short') lengthInstruction = 'Keep your response concise (under 200 words).';
+            else if (chat.responseLength === 'detailed') lengthInstruction = 'Provide a detailed and comprehensive response (around 1000 words).';
+            else if (chat.responseLength === 'unlimited') lengthInstruction = 'Provide as much detail as necessary.';
+            else lengthInstruction = 'Keep your response moderately detailed (around 500 words).';
+
             const languagePrompt = locale === 'en' ? 'Respond in English.' : '用中文回复。';
             const executionPrompt = `If the user requests you to perform a specific action (like generating a presentation, drafting a document, or sending an email) that requires execution, you MUST ask for confirmation first. Do not just output the document directly if it's supposed to be an execution task. Say something like: "I understand you want me to [Action]. Please confirm and I will execute it."`;
             const critiquePrompt = `You are participating in a group chat with the user and other AI colleagues. 
 Be highly professional and stay strictly in your character's role (${agentConfig.role}). 
 You can agree or disagree with other colleagues based on your professional background. Do not argue pointlessly, but if a colleague suggests something that violates your professional domain (e.g. legal risks, high costs, bad scheduling), you should politely but firmly point it out.
-Keep your responses concise, conversational, and fit for a group chat (1-2 short paragraphs).`;
+IMPORTANT: Do NOT prefix your response with your own name (e.g. do not write "[${agentConfig.name}]:"). Reply directly with your message content.
+${lengthInstruction}`;
 
             messagesForLLM.push({ 
               role: 'system', 
