@@ -60,7 +60,14 @@ export async function POST(req: Request) {
          try {
            const payload = JSON.parse(sibling.resultPayload);
            if (payload.fileUrl) {
-              const filePath = path.join(process.cwd(), 'public', payload.fileUrl);
+              // Support both old /downloads/xxx.pptx and new /api/bristh/download?file=xxx.pptx
+              let filePath: string;
+              if (payload.fileUrl.includes('?file=')) {
+                const fileName = new URL(payload.fileUrl, 'http://localhost').searchParams.get('file') || '';
+                filePath = path.join('/tmp', 'bristh-downloads', fileName);
+              } else {
+                filePath = path.join(process.cwd(), 'public', payload.fileUrl);
+              }
               mailAttachments.push({
                  filename: `${sibling.agent}_Presentation.pptx`,
                  path: filePath
