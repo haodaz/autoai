@@ -126,6 +126,7 @@ export function buildCompletionParams(
   options: {
     requireJson?: boolean;
     maxTokens?: number;
+    stream?: boolean;
   } = {}
 ): any {
   // Gemini & Claude compatibility: must have at least one user-role message
@@ -149,6 +150,10 @@ export function buildCompletionParams(
     model: config.modelName,
     messages: processedMessages,
   };
+  
+  if (options.stream) {
+    params.stream = true;
+  }
   
   // JSON mode: only use response_format for models that support it
   if (options.requireJson && config.supportsJsonMode) {
