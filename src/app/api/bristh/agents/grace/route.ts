@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       + `\n\nExtract email details. Output ONLY a valid JSON object:
 {
   "to": "recipient email. If none stated, use 'haoz214@gmail.com'",
+  "cc": "CC email(s), comma-separated. Omit or empty string if not specified.",
   "subject": "Professional email subject",
   "htmlBody": "HTML formatted body. Professional, well-spaced, polite. Mention any attachments."
 }`;
@@ -116,12 +117,13 @@ export async function POST(req: Request) {
     await transporter.sendMail({
       from: `"Bristh Enrollment Partners" <${process.env.IMAP_USER}>`,
       to: toEmail,
+      cc: parsedEmail.cc || undefined,
       subject: parsedEmail.subject,
       html: parsedEmail.htmlBody,
       attachments: mailAttachments
     });
 
-    const resultContent = `### 邮件发送成功 ✅\n\n**收件人**: ${toEmail}\n**主题**: ${parsedEmail.subject}\n\n**正文内容预览**:\n${parsedEmail.htmlBody.replace(/<[^>]+>/g, '')}`;
+    const resultContent = `### 邮件发送成功 ✅\n\n**收件人**: ${toEmail}${parsedEmail.cc ? `\n**CC**: ${parsedEmail.cc}` : ''}\n**主题**: ${parsedEmail.subject}\n\n**正文内容预览**:\n${parsedEmail.htmlBody.replace(/<[^>]+>/g, '')}`;
 
     const resultPayload = JSON.stringify({
       summary: `📧 邮件已发送至 ${toEmail}：${parsedEmail.subject}`,
