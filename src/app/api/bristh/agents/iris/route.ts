@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import { buildAgentPrompt } from '@/lib/bristh-config';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Allow up to 120s for webpage generation (large HTML output)
 export const maxDuration = 120;
@@ -17,6 +19,35 @@ function extractJSON(raw: string): any {
     try { return JSON.parse(objMatch[0]); } catch {}
   }
   return null;
+}
+
+/**
+ * Auto-publish site to /sites/slug
+ */
+async function publishSite(site: any): Promise<string> {
+  const SITES_DIR = path.join(process.cwd(), 'public', '_sites');
+  try { await fs.mkdir(SITES_DIR, { recursive: true }); } catch {}
+  
+  const slug = (site.name || 'site')
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
+    .replace(/^-|-$/g, '')
+    || 'site-' + Date.now();
+
+  await fs.writeFile(
+    path.join(SITES_DIR, `${slug}.json`),
+    JSON.stringify({
+      slug,
+      siteName: site.name,
+      themeColor: site.themeColor,
+      pages: site.pages,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }, null, 2),
+    'utf-8'
+  );
+
+  return `/sites/${slug}`;
 }
 
 export async function POST(req: Request) {
@@ -81,12 +112,21 @@ Generate 3-4 pages. Output ONLY valid JSON.`;
       throw new Error('Failed to parse webpage JSON from LLM output');
     }
 
-    // Save site data and mark as done
-    const summary = `🌐 已生成 ${site.pages.length} 页宣传站点「${site.name}」`;
+    // 3. Auto-publish to /sites/slug
+    let publishedUrl = '';
+    try {
+      publishedUrl = await publishSite(site);
+    } catch (e: any) {
+      console.warn('Auto-publish failed (non-fatal):', e.message);
+    }
+
+    // 4. Save result with published URL for downstream agents (e.g. Grace)
+    const summary = `🌐 已生成 ${site.pages.length} 页宣传站点「${site.name}」${publishedUrl ? ` → ${publishedUrl}` : ''}`;
     const resultPayload = JSON.stringify({
       summary,
       content: raw,
-      site
+      site,
+      publishedUrl
     });
 
     const updatedTask = await prisma.task.update({
