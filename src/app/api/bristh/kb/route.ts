@@ -6,6 +6,18 @@ export async function GET() {
     const contexts = await prisma.taskContext.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
+        tasks: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            agent: true,
+            instruction: true,
+            status: true,
+            resultPayload: true,
+            createdAt: true,
+            updatedAt: true,
+          }
+        },
         _count: {
           select: { tasks: true }
         }
