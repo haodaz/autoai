@@ -135,6 +135,35 @@ export default function FilePanel({
   const totalSize = files.reduce((s, f) => s + (f.size || 0), 0);
   const usagePct = Math.min(100, Math.round((totalSize / QUOTA) * 100));
 
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [pasteTitle, setPasteTitle] = useState('');
+  const [pasteContent, setPasteContent] = useState('');
+  const [pasteSaving, setPasteSaving] = useState(false);
+
+  const handlePasteSubmit = async () => {
+    if (!pasteContent.trim()) { message.warning('请输入文本内容'); return; }
+    const title = pasteTitle.trim() || `文档_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '')}`;
+    const fileName = title.endsWith('.txt') || title.endsWith('.md') ? title : `${title}.txt`;
+    const blob = new Blob([pasteContent], { type: 'text/plain' });
+    const file = new File([blob], fileName, { type: 'text/plain' });
+    
+    setPasteSaving(true);
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const res = await fetch(`/api/kb/libraries/${libId}/files`, { method: 'POST', body: form });
+      const result = await res.json();
+      if (result.ok) {
+        message.success('文本已保存为文档');
+        fetchFiles();
+        setShowPasteModal(false);
+        setPasteTitle('');
+        setPasteContent('');
+      } else { message.error(result.error || '保存失败'); }
+    } catch { message.error('保存失败'); }
+    finally { setPasteSaving(false); }
+  };
+
   return (
     <div style={{ width: '100%', flex: 1, background: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
@@ -144,25 +173,82 @@ export default function FilePanel({
         <span style={{ fontSize: 11, background: '#f3f4f6', color: '#6b7280', borderRadius: 20, padding: '1px 7px', fontWeight: 500 }}>{files.length}</span>
       </div>
 
-      {/* 上传按钮 */}
-      <div style={{ padding: '0 14px 10px', flexShrink: 0, position: 'relative' }}>
+      {/* 上传按钮组 */}
+      <div style={{ padding: '0 14px 10px', flexShrink: 0, display: 'flex', gap: 6 }}>
         <button
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
           style={{
-            width: '100%', height: 34, borderRadius: 9, border: 'none',
+            flex: 1, height: 34, borderRadius: 9, border: 'none',
             background: uploading ? '#c4b5fd' : PURPLE,
-            color: '#fff', fontSize: 13, fontWeight: 600, cursor: uploading ? 'default' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            color: '#fff', fontSize: 12, fontWeight: 600, cursor: uploading ? 'default' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
           }}>
           {uploading
-            ? <><span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>⟳</span> 正在处理文档…</>
-            : <>＋ 上传文件</>
+            ? <><span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>⟳</span> 处理中…</>
+            : <>📁 上传文件</>
           }
         </button>
-        <input ref={inputRef} type="file" multiple accept=".pdf,.txt,.md,.doc,.docx,.csv"
+        <button
+          onClick={() => setShowPasteModal(true)}
+          style={{
+            flex: 1, height: 34, borderRadius: 9, border: `1.5px solid ${PURPLE}`,
+            background: '#fff', color: PURPLE, fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f0fdf4'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#fff'; }}>
+          📝 粘贴文本
+        </button>
+        <input ref={inputRef} type="file" multiple accept=".pdf,.txt,.md,.doc,.docx,.csv,.xlsx,.xls,.pptx,.ppt"
           style={{ display: 'none' }} onChange={handleUpload} />
       </div>
+
+      {/* 粘贴文本弹窗 */}
+      {showPasteModal && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setShowPasteModal(false); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 560, maxWidth: '95vw', maxHeight: '85vh', borderRadius: 16, background: '#fff', padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#14151f', marginBottom: 16 }}>粘贴文本内容</div>
+            <input
+              value={pasteTitle}
+              onChange={e => setPasteTitle(e.target.value)}
+              placeholder="文档标题（选填，默认按日期命名）"
+              maxLength={60}
+              style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 9, padding: '9px 13px', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
+              onFocus={e => e.target.style.borderColor = PURPLE}
+              onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+            />
+            <textarea
+              value={pasteContent}
+              onChange={e => setPasteContent(e.target.value)}
+              placeholder="在此粘贴文本内容...&#10;&#10;支持直接粘贴会议记录、文章、笔记等任何文本内容"
+              style={{
+                flex: 1, minHeight: 240, width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 9,
+                padding: '12px 14px', fontSize: 13.5, lineHeight: 1.7, outline: 'none', boxSizing: 'border-box',
+                resize: 'vertical', fontFamily: 'inherit',
+              }}
+              onFocus={e => e.target.style.borderColor = PURPLE}
+              onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
+              <span style={{ fontSize: 11, color: '#9ca3af' }}>{pasteContent.length} 字</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setShowPasteModal(false)}
+                  style={{ padding: '8px 18px', borderRadius: 9, border: '1px solid #e5e7eb', background: '#f9fafb', color: '#374151', fontSize: 13, cursor: 'pointer' }}>
+                  取消
+                </button>
+                <button onClick={handlePasteSubmit} disabled={pasteSaving}
+                  style={{ padding: '8px 22px', borderRadius: 9, border: 'none', background: PURPLE, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: pasteSaving ? 0.7 : 1 }}>
+                  {pasteSaving ? '保存中…' : '保存为文档'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 文件列表（可滚动）*/}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px' }}>

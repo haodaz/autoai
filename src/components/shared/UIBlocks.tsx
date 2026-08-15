@@ -11,6 +11,7 @@ export const COLOR_BORDER_MAP: Record<string, { color: string; shadow: string }>
   cyan: { color: 'border-cyan-500', shadow: 'shadow-cyan-500/20' },
   pink: { color: 'border-pink-500', shadow: 'shadow-pink-500/20' },
   indigo: { color: 'border-indigo-500', shadow: 'shadow-indigo-500/20' },
+  teal: { color: 'border-teal-500', shadow: 'shadow-teal-500/20' },
 };
 
 export function renderPreviewStandalone(payload: string | null) {

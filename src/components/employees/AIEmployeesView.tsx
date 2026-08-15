@@ -30,6 +30,7 @@ const COLOR_MAP: Record<string, { bg: string; border: string; tag: string; gradi
   cyan:    { bg: 'bg-cyan-50',    border: 'border-cyan-200', tag: 'bg-cyan-100 text-cyan-700',       gradient: 'from-cyan-500 to-cyan-600',    shadow: 'shadow-cyan-500/20' },
   pink:    { bg: 'bg-pink-50',    border: 'border-pink-200', tag: 'bg-pink-100 text-pink-700',       gradient: 'from-pink-500 to-pink-600',    shadow: 'shadow-pink-500/20' },
   indigo:  { bg: 'bg-indigo-50',  border: 'border-indigo-200', tag: 'bg-indigo-100 text-indigo-700',   gradient: 'from-indigo-500 to-indigo-600', shadow: 'shadow-indigo-500/20' },
+  teal:    { bg: 'bg-teal-50',    border: 'border-teal-200', tag: 'bg-teal-100 text-teal-700',       gradient: 'from-teal-500 to-teal-600',    shadow: 'shadow-teal-500/20' },
 };
 
 export default function AIEmployeesView() {

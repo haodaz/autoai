@@ -135,18 +135,17 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
   };
 
   // Auto-restore active pipeline on mount
+  // Only restore if there are RUNNING tasks (actively executing).
+  // Stale AWAITING_APPROVAL tasks from old pipelines should not hijack the idle view.
   useEffect(() => {
     if (pendingDispatchTask) return; // Skip if we're about to dispatch
     
-    // Check for any active context (has RUNNING or AWAITING_APPROVAL tasks)
     fetch('/api/bristh/tasks?mode=history')
       .then(r => r.json())
       .then((contexts: any[]) => {
         if (!Array.isArray(contexts)) return;
         const activeCtx = contexts.find((c: any) => 
-          c.tasks?.some((t: any) => 
-            t.status === 'RUNNING' || t.status === 'AWAITING_APPROVAL'
-          )
+          c.tasks?.some((t: any) => t.status === 'RUNNING')
         );
         if (activeCtx) {
           loadHistory(activeCtx.id);
@@ -194,6 +193,17 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
       const assignedTasks = data.tasks || [];
       addLog('Chief', `Orchestration complete. Participating agents: ${assignedTasks.map((t:any) => t.agent).join(', ')}.`);
       
+      // Dynamic depth calculation based on agent dependencies
+      const agentNames = assignedTasks.map((t: any) => t.agent.toLowerCase());
+      const hasHugo = agentNames.includes('hugo');
+      const hasEdda = agentNames.includes('edda');
+      const getDepth = (agent: string) => {
+        const a = agent.toLowerCase();
+        if (a === 'grace') return hasEdda && hasHugo ? 3 : 2;
+        if (a === 'edda' && hasHugo) return 2;
+        return 1;
+      };
+
       const initialActiveNodes = assignedTasks.map((t:any) => {
         const taskRecord = data.tasks.find((dbTask: any) => dbTask.agent === t.agent);
         return {
@@ -201,13 +211,10 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
           instruction: t.instruction,
           status: 'working',
           taskId: taskRecord?.id,
-          depth: t.agent.toLowerCase() === 'grace' ? 2 : 1,
+          depth: getDepth(t.agent),
         };
       });
       setActiveNodes(initialActiveNodes);
-      
-      const otherTasks = data.tasks.filter((t: any) => t.agent.toLowerCase() !== 'grace');
-      const graceTasks = data.tasks.filter((t: any) => t.agent.toLowerCase() === 'grace');
 
       const executeAgent = async (taskRecord: any) => {
         const agentName = taskRecord.agent;
@@ -256,11 +263,16 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
         }
       };
 
-      await Promise.all(otherTasks.map((t:any) => executeAgent(t)));
-      
-      if (graceTasks.length > 0) {
-         addLog('System', 'Dependencies met. Starting Grace...');
-         await Promise.all(graceTasks.map((t:any) => executeAgent(t)));
+      // Group tasks by depth and execute sequentially
+      const depthGroups = new Map<number, any[]>();
+      data.tasks.forEach((t: any) => {
+        const d = getDepth(t.agent);
+        depthGroups.set(d, [...(depthGroups.get(d) || []), t]);
+      });
+      for (const depth of [...depthGroups.keys()].sort()) {
+        const group = depthGroups.get(depth)!;
+        if (depth > 1) addLog('System', `Dependencies met. Starting stage ${depth}: ${group.map((t: any) => t.agent).join(', ')}...`);
+        await Promise.all(group.map((t: any) => executeAgent(t)));
       }
 
       addLog('Chief', 'All sub-tasks reported back. Pipeline finished.');
@@ -282,17 +294,25 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
     addLog('System', 'Task confirmed. Executing pre-assigned pipeline.');
     addLog('Chief', `Dispatching ${preCreatedTasks.length} agents: ${preCreatedTasks.map((t: any) => t.agent).join(', ')}.`);
 
+    // Dynamic depth calculation based on agent dependencies
+    const agentNames2 = preCreatedTasks.map((t: any) => t.agent.toLowerCase());
+    const hasHugo2 = agentNames2.includes('hugo');
+    const hasEdda2 = agentNames2.includes('edda');
+    const getDepth2 = (agent: string) => {
+      const a = agent.toLowerCase();
+      if (a === 'grace') return hasEdda2 && hasHugo2 ? 3 : 2;
+      if (a === 'edda' && hasHugo2) return 2;
+      return 1;
+    };
+
     const initialActiveNodes = preCreatedTasks.map((t: any) => ({
       agent: t.agent,
       instruction: t.instruction,
       status: 'working',
       taskId: t.id,
-      depth: t.agent.toLowerCase() === 'grace' ? 2 : 1,
+      depth: getDepth2(t.agent),
     }));
     setActiveNodes(initialActiveNodes);
-
-    const otherTasks = preCreatedTasks.filter((t: any) => t.agent.toLowerCase() !== 'grace');
-    const graceTasks = preCreatedTasks.filter((t: any) => t.agent.toLowerCase() === 'grace');
 
     const executeAgent = async (taskRecord: any) => {
       const agentName = taskRecord.agent;
@@ -337,16 +357,23 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
       }
     };
 
-    await Promise.all(otherTasks.map((t: any) => executeAgent(t)));
-
-    // Check if any tasks are awaiting approval
-    const hasAwaitingApproval = otherTasks.some((t: any) => t.requiresApproval);
-    
-    if (graceTasks.length > 0 && !hasAwaitingApproval) {
-      addLog('System', 'Dependencies met. Starting Grace...');
-      await Promise.all(graceTasks.map((t: any) => executeAgent(t)));
-    } else if (graceTasks.length > 0 && hasAwaitingApproval) {
-      addLog('System', '⏸️ Grace 等待审批完成后执行...');
+    // Group tasks by depth and execute sequentially, respecting approval gates
+    const depthGroups2 = new Map<number, any[]>();
+    preCreatedTasks.forEach((t: any) => {
+      const d = getDepth2(t.agent);
+      depthGroups2.set(d, [...(depthGroups2.get(d) || []), t]);
+    });
+    const sortedDepths = [...depthGroups2.keys()].sort();
+    let hasAwaitingApproval = false;
+    for (const depth of sortedDepths) {
+      const group = depthGroups2.get(depth)!;
+      if (hasAwaitingApproval) {
+        addLog('System', `⏸️ Stage ${depth} (${group.map((t: any) => t.agent).join(', ')}) 等待审批完成后执行...`);
+        break;
+      }
+      if (depth > 1) addLog('System', `Dependencies met. Starting stage ${depth}: ${group.map((t: any) => t.agent).join(', ')}...`);
+      await Promise.all(group.map((t: any) => executeAgent(t)));
+      hasAwaitingApproval = group.some((t: any) => t.requiresApproval);
     }
 
     if (!hasAwaitingApproval) {
@@ -406,45 +433,57 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
 
       addLog('System', `✅ ${agentName} 已批准 (剩余 ${data.remainingApprovals} 项待审批)`);
 
-      // If all tasks are approved, trigger Grace
+      // If all tasks are approved, execute remaining pipeline stages in depth order
       if (data.allApproved) {
-        addLog('System', '🎉 所有审批已通过！');
+        addLog('System', '🎉 所有审批已通过！正在恢复管线执行...');
         
-        // Find Grace node in the pipeline
-        const graceNode = activeNodes.find(n => n.agent.toLowerCase() === 'grace');
-        if (graceNode && graceNode.taskId && graceNode.status === 'working') {
-          addLog('System', 'Dependencies met. Starting Grace...');
+        // Helper to execute a single agent
+        const executeAgent = async (node: { agent: string; taskId: string; depth: number }) => {
+          addLog(node.agent, `Executing sub-task...`);
+          setActiveNodes(prev => prev.map(n => n.taskId === node.taskId ? { ...n, status: 'working' } : n));
           try {
-            const graceRes = await fetch(`/api/bristh/agents/grace`, {
+            const agentRes = await fetch(`/api/bristh/agents/${node.agent.toLowerCase()}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ taskId: graceNode.taskId, locale: i18n.language }),
+              body: JSON.stringify({ taskId: node.taskId, locale: i18n.language }),
             });
-
-            if (graceRes.ok) {
-              const graceData = await graceRes.json();
-              let summary = '';
-              try {
-                const payload = graceData.task?.resultPayload;
-                if (payload) { const parsed = JSON.parse(payload); summary = parsed.summary || ''; }
-              } catch {}
-              
-              addLog('Grace', '✅ Completed. Email dispatched.');
-              setActiveNodes(prev => prev.map(n => 
-                n.agent === 'Grace' ? { ...n, status: 'done', summary } : n
-              ));
-            } else {
-              addLog('Grace', '❌ Failed to execute.');
-              setActiveNodes(prev => prev.map(n => 
-                n.agent === 'Grace' ? { ...n, status: 'failed' } : n
-              ));
-            }
+            if (!agentRes.ok) throw new Error(`Failed with status ${agentRes.status}`);
+            const agentData = await agentRes.json();
+            let summary = '';
+            try {
+              const payload = agentData.task?.resultPayload;
+              if (payload) { const parsed = JSON.parse(payload); summary = parsed.summary || ''; }
+            } catch {}
+            addLog(node.agent, '✅ Completed.');
+            setActiveNodes(prev => prev.map(n => n.taskId === node.taskId ? { ...n, status: 'done', summary } : n));
           } catch (err: any) {
-            addLog('Grace', `❌ Error: ${err.message}`);
-            setActiveNodes(prev => prev.map(n => 
-              n.agent === 'Grace' ? { ...n, status: 'failed' } : n
-            ));
+            addLog(node.agent, `❌ Error: ${err.message}`);
+            setActiveNodes(prev => prev.map(n => n.taskId === node.taskId ? { ...n, status: 'failed' } : n));
           }
+        };
+
+        // Find all pending/working agents that haven't completed yet (depth > current approval depth)
+        // Use latest state via callback
+        const pendingNodes: { agent: string; taskId: string; depth: number }[] = [];
+        setActiveNodes(prev => {
+          prev.forEach(n => {
+            if (n.status === 'working' && n.taskId && n.agent.toLowerCase() !== 'chief') {
+              pendingNodes.push({ agent: n.agent, taskId: n.taskId, depth: n.depth });
+            }
+          });
+          return prev;
+        });
+
+        // Group by depth and execute sequentially
+        const depthGroups = new Map<number, typeof pendingNodes>();
+        pendingNodes.forEach(n => {
+          depthGroups.set(n.depth, [...(depthGroups.get(n.depth) || []), n]);
+        });
+
+        for (const depth of [...depthGroups.keys()].sort()) {
+          const group = depthGroups.get(depth)!;
+          addLog('System', `Dependencies met. Starting stage ${depth}: ${group.map(n => n.agent).join(', ')}...`);
+          await Promise.all(group.map(n => executeAgent(n)));
         }
 
         addLog('Chief', 'All approvals complete. Pipeline finished. ✅');

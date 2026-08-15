@@ -58,6 +58,15 @@ export const MODEL_REGISTRY: Record<string, ModelConfig> = {
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
     supportsJsonMode: true,
   },
+  'gpt-4o': {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
+    provider: 'OpenAI',
+    modelName: 'gpt-4o',
+    apiKeyEnv: 'OPENAI_API_KEY',
+    baseURL: 'https://api.openai.com/v1',
+    supportsJsonMode: true,
+  },
 };
 
 // File to persist model selection (server-side) — use /tmp for deployed environments

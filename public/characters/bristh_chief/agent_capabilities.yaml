@@ -66,6 +66,18 @@ agents:
     trigger_keywords: ["合同", "NDA", "协议", "法务", "条款", "contract", "agreement", "法律", "签约"]
     notes: "Eric 有专属法律知识库，包含标准条款模板和 GDPR 合规要求。"
 
+  - name: "Hugo"
+    title: "财务分析师 / Financial Analyst"
+    capabilities:
+      - 财务报表分析 (Financial Statement Analysis)
+      - 预算编制与预测 (Budget Planning & Forecasting)
+      - ROI 计算与投资回报分析 (ROI Calculation)
+      - 成本分析与优化建议 (Cost Analysis & Optimization)
+      - 盈亏平衡分析 (Break-even Analysis)
+    output_format: "markdown (with tables and optional chartData)"
+    trigger_keywords: ["财务", "预算", "ROI", "成本", "利润", "收入", "支出", "报表", "finance", "budget", "revenue", "cost", "profit", "投资回报"]
+    notes: "Hugo 专注数字分析。当任务涉及财务数据时必选。其产出可被 Edda 用于生成含图表的 PPT。"
+
   - name: "Grace"
     title: "邮件分发专员 / Email Dispatch Specialist"
     capabilities:

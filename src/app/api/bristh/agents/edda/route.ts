@@ -6,6 +6,8 @@ import path from 'path';
 import fs from 'fs/promises';
 import { buildAgentPrompt } from '@/lib/bristh-config';
 
+// Allow up to 120s for PPT generation (GPT-4o JSON output can be slow)
+export const maxDuration = 120;
 
 export async function POST(req: Request) {
   let taskIdForError = '';
