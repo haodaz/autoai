@@ -5,6 +5,7 @@ import PptxGenJS from 'pptxgenjs';
 import path from 'path';
 import fs from 'fs/promises';
 import { buildAgentPrompt } from '@/lib/bristh-config';
+import { recordTaskCompletion } from '@/lib/memory-hooks';
 
 // Allow up to 120s for PPT generation (GPT-4o JSON output can be slow)
 export const maxDuration = 120;
@@ -196,6 +197,8 @@ Rules:
         toolCallsLog: toolCallsLog
       }
     });
+
+    recordTaskCompletion('edda', taskId, task.instruction, `PPT ${slides.length} 页`).catch(() => {});
 
     return NextResponse.json({ success: true, task: updatedTask });
   } catch (error: any) {

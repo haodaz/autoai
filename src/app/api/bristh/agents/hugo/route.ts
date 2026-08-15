@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import { buildAgentPrompt } from '@/lib/bristh-config';
+import { recordTaskCompletion } from '@/lib/memory-hooks';
 
 // Allow up to 120s for financial analysis generation
 export const maxDuration = 120;
@@ -64,6 +65,9 @@ Use proper Markdown formatting with tables, headings, and bullet points. Be prec
         resultPayload
       }
     });
+
+    // Memory hook
+    recordTaskCompletion('hugo', taskId, task.instruction, resultMarkdown.slice(0, 200)).catch(() => {});
 
     return NextResponse.json({ success: true, task: updatedTask });
   } catch (error: any) {

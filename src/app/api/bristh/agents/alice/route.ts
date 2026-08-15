@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import { buildAgentPrompt } from '@/lib/bristh-config';
+import { recordTaskCompletion } from '@/lib/memory-hooks';
 
 
 export async function POST(req: Request) {
@@ -55,6 +56,9 @@ export async function POST(req: Request) {
         resultPayload
       }
     });
+
+    // Memory hook: record task completion (fire-and-forget)
+    recordTaskCompletion('alice', taskId, task.instruction, resultMarkdown.slice(0, 200)).catch(() => {});
 
     return NextResponse.json({ success: true, task: updatedTask });
   } catch (error: any) {

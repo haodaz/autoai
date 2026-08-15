@@ -58,6 +58,8 @@ export async function loadAgentContext(agentId: string): Promise<string> {
  * 2. Task-specific instruction from Chief
  * 3. Raw context from TaskContext
  * 4. Agent-specific private knowledge (context/ files)
+ * 5. Soul file (accumulated experience from Dreaming Agent)
+ * 6. Recent memories (lessons learned, user feedback)
  */
 export async function buildAgentPrompt(
   agentId: string,
@@ -69,12 +71,32 @@ export async function buildAgentPrompt(
   const config = await loadAgentConfig(agentId);
   const privateContext = await loadAgentContext(agentId);
   
+  // Import memory-engine dynamically to avoid circular deps
+  let soulContent = '';
+  let recentMemories: { type: string; content: string }[] = [];
+  try {
+    const { loadSoulFile, loadAgentMemories } = await import('./memory-engine');
+    soulContent = await loadSoulFile(agentId);
+    recentMemories = await loadAgentMemories(agentId, 10);
+  } catch (e) {
+    console.warn('Memory engine not available:', e);
+  }
+  
   const persona = config?.persona || fallbackPersona;
   
   let prompt = `${persona}\n\nYour specific instruction for this task from the Chief Orchestrator:\n"${instruction}"\n\nHere is the raw context provided by the client or meeting transcript:\n----------------\n${rawContent}\n----------------`;
   
   if (privateContext) {
     prompt += `\n\nAdditional reference knowledge (agent-specific):\n----------------\n${privateContext}\n----------------`;
+  }
+
+  if (soulContent) {
+    prompt += `\n\n【Your accumulated experience and learnings (Soul File)】:\n----------------\n${soulContent}\n----------------`;
+  }
+
+  if (recentMemories.length > 0) {
+    const memStr = recentMemories.map(m => `- [${m.type}] ${m.content}`).join('\n');
+    prompt += `\n\n【Recent memories from past tasks — apply these lessons】:\n${memStr}`;
   }
 
   // Inject language instruction based on user's UI locale

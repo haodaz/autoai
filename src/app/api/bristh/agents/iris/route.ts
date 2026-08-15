@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import { buildAgentPrompt } from '@/lib/bristh-config';
+import { recordTaskCompletion } from '@/lib/memory-hooks';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -136,6 +137,9 @@ Generate 3-4 pages. Output ONLY valid JSON.`;
         resultPayload
       }
     });
+
+    // Memory hook
+    recordTaskCompletion('iris', taskId, task.instruction, summary).catch(() => {});
 
     return NextResponse.json({ success: true, task: updatedTask });
   } catch (error: any) {
