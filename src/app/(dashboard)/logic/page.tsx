@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BookOpen, Database, Cpu, Users, GitMerge, CheckCircle, Presentation, Calendar, Mail, FileText, Activity, Settings, Layers, Shield, ChevronRight, ShieldCheck, MessageSquare } from 'lucide-react';
+import { BookOpen, Database, Cpu, Users, GitMerge, CheckCircle, Presentation, Calendar, Mail, FileText, Activity, Settings, Layers, Shield, ChevronRight, ShieldCheck, MessageSquare, Brain } from 'lucide-react';
 
 const SECTIONS = [
   { id: 'arch', label: '核心解耦架构', icon: GitMerge },
@@ -10,6 +10,7 @@ const SECTIONS = [
   { id: 'think', label: 'Think+Work 范式', icon: Activity },
   { id: 'assembly', label: 'AI 装配系统', icon: Settings },
   { id: 'knowledge', label: '分层知识库', icon: Layers },
+  { id: 'memory', label: 'AI 记忆系统', icon: Brain },
   { id: 'capability', label: 'Chief 能力字典', icon: Shield },
   { id: 'approval', label: '审批闭环机制', icon: ShieldCheck },
   { id: 'chat2task', label: '对话→任务打通', icon: MessageSquare },
@@ -45,7 +46,7 @@ export default function LogicWhitepaper() {
           ))}
         </nav>
         <div className="px-3 pt-4 border-t border-gray-100">
-          <p className="text-[10px] text-gray-300 font-medium">V3.0.0 — Approval + Chat-to-Task</p>
+          <p className="text-[10px] text-gray-300 font-medium">V4.0.0 — Memory System + Dreaming Agent</p>
         </div>
       </div>
 
@@ -283,10 +284,127 @@ export default function LogicWhitepaper() {
             </div>
           </section>
 
-          {/* Section 7: Chief Capability Dictionary (NEW) */}
+          {/* Section 7: AI Memory System */}
+          <section id="memory">
+            <h2 className="text-xl font-black flex items-center text-gray-900 mb-5">
+              <Brain className="w-5 h-5 mr-3 text-rose-500" /> 7. AI 记忆系统 (Memory System)
+            </h2>
+            <div className="bg-rose-50 border-l-4 border-rose-500 p-5 rounded-r-xl mb-5">
+              <p className="text-gray-700 leading-relaxed text-sm">
+                受<strong>海马体记忆回放（Hippocampal Replay）</strong>脑科学理论启发，我们为每个 AI Agent 构建了独立的记忆系统。Agent 不再是&quot;无状态&quot;的执行器，而是能够从经验中学习、记住用户偏好、并在做梦中整理知识的&quot;有灵魂&quot;的智能体。
+              </p>
+            </div>
+
+            {/* 3-Layer Architecture Diagram */}
+            <div className="bg-white border border-gray-100 rounded-xl p-6 mb-6">
+              <h3 className="text-sm font-bold text-gray-800 mb-4">三层记忆架构</h3>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100 text-center">
+                  <div className="text-2xl mb-2">📋</div>
+                  <h4 className="text-xs font-bold text-emerald-700 mb-1">业务知识</h4>
+                  <p className="text-[10px] text-emerald-600/70">公司 · 客户 · 行业</p>
+                  <p className="text-[9px] text-emerald-400 mt-2">人工上传</p>
+                </div>
+                <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 text-center">
+                  <div className="text-2xl mb-2">📝</div>
+                  <h4 className="text-xs font-bold text-indigo-700 mb-1">任务记忆</h4>
+                  <p className="text-[10px] text-indigo-600/70">任务摘要 · 执行记录</p>
+                  <p className="text-[9px] text-indigo-400 mt-2">自动存入</p>
+                </div>
+                <div className="bg-rose-50 rounded-xl p-4 border border-rose-100 text-center">
+                  <div className="text-2xl mb-2">🧠</div>
+                  <h4 className="text-xs font-bold text-rose-700 mb-1">AI 私人记忆</h4>
+                  <p className="text-[10px] text-rose-600/70">灵魂文件 · 经验教训</p>
+                  <p className="text-[9px] text-rose-400 mt-2">事件驱动 + 每日做梦</p>
+                </div>
+              </div>
+
+              <h3 className="text-sm font-bold text-gray-800 mb-4">记忆写入 — 事件 Hook 系统</h3>
+              <div className="space-y-2 mb-6">
+                {[
+                  { event: '任务完成', trigger: 'Agent route 返回 COMPLETED 后', target: '任务摘要 + 关键学习点', color: 'bg-blue-50 text-blue-700 border-blue-100' },
+                  { event: '用户审批反馈', trigger: 'handleApproveTask 中', target: '用户的修改意见 / 批评', color: 'bg-amber-50 text-amber-700 border-amber-100' },
+                  { event: 'Copilot 修改', trigger: 'Toolbox AI Chat 中', target: '用户的修改指令（偏好）', color: 'bg-cyan-50 text-cyan-700 border-cyan-100' },
+                  { event: '每日总结', trigger: 'Cron 0:00 AM (ET)', target: 'Dreaming Agent 归纳当日记忆', color: 'bg-rose-50 text-rose-700 border-rose-100' },
+                ].map(item => (
+                  <div key={item.event} className="flex items-center gap-3">
+                    <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border ${item.color} whitespace-nowrap`}>{item.event}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                    <span className="text-[10px] text-gray-500">{item.trigger}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                    <span className="text-[10px] text-gray-700 font-semibold">{item.target}</span>
+                  </div>
+                ))}
+              </div>
+
+              <h3 className="text-sm font-bold text-gray-800 mb-4">Dreaming Agent — 海马体记忆回放</h3>
+              <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-rose-50 rounded-xl p-5 border border-purple-100 mb-6">
+                <div className="flex items-center gap-6 flex-wrap justify-center">
+                  {[
+                    { phase: 'NREM 巩固', emoji: '🌙', desc: '归纳当日经验 → 更新灵魂文件', color: 'text-indigo-700' },
+                    { phase: 'REM 做梦', emoji: '💭', desc: '交叉关联不同任务的经验', color: 'text-purple-700' },
+                    { phase: '选择性遗忘', emoji: '🧹', desc: '低重要性记忆过期清理', color: 'text-rose-700' },
+                  ].map((p, i) => (
+                    <React.Fragment key={p.phase}>
+                      {i > 0 && <ChevronRight className="w-4 h-4 text-gray-300" />}
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">{p.emoji}</div>
+                        <h4 className={`text-xs font-bold ${p.color} mb-0.5`}>{p.phase}</h4>
+                        <p className="text-[9px] text-gray-500">{p.desc}</p>
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+                <div className="mt-4 text-center text-[10px] text-gray-400">
+                  脑科学基础：海马体在睡眠中以高速重放白天的神经序列 → 选择性加强有奖励信号的记忆 → 转移到新皮层长期存储
+                </div>
+              </div>
+
+              <h3 className="text-sm font-bold text-gray-800 mb-3">记忆保留策略</h3>
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="bg-green-50 rounded-lg p-3 border border-green-100 text-center">
+                  <div className="text-xs font-bold text-green-700 mb-1">高重要性 {'>'}0.7</div>
+                  <div className="text-lg font-black text-green-600">♾️ 永久</div>
+                  <div className="text-[9px] text-green-500 mt-1">用户反馈 · 关键教训</div>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-3 border border-amber-100 text-center">
+                  <div className="text-xs font-bold text-amber-700 mb-1">中等 0.4—0.7</div>
+                  <div className="text-lg font-black text-amber-600">30 天</div>
+                  <div className="text-[9px] text-amber-500 mt-1">任务摘要 · 一般经验</div>
+                </div>
+                <div className="bg-red-50 rounded-lg p-3 border border-red-100 text-center">
+                  <div className="text-xs font-bold text-red-700 mb-1">低 {'<'}0.4</div>
+                  <div className="text-lg font-black text-red-500">7 天</div>
+                  <div className="text-[9px] text-red-400 mt-1">琐碎记录 · 噪音</div>
+                </div>
+              </div>
+
+              <h3 className="text-sm font-bold text-gray-800 mb-3">灵魂文件（Soul File）</h3>
+              <div className="bg-gray-900 rounded-xl p-5 text-green-400 text-[11px] font-mono leading-relaxed overflow-x-auto">
+                <div className="text-gray-500"># Alice 的灵魂文件</div>
+                <div className="text-gray-600">{`> 最后更新: 2025-08-15 by Dreaming Agent`}</div>
+                <br/>
+                <div className="text-gray-500">## 核心能力认知</div>
+                <div>- 我擅长写结构清晰的商业方案</div>
+                <div>- 英国教育市场任务参考 Myddelton 案例</div>
+                <br/>
+                <div className="text-gray-500">## 已学教训</div>
+                <div>- 中英双语时不翻译人名和学校名</div>
+                <div>- 署名统一用 &quot;BEP office AI team&quot;</div>
+                <br/>
+                <div className="text-gray-500">## 用户偏好</div>
+                <div>- 文档默认中文，邮件用英文</div>
+                <br/>
+                <div className="text-gray-500">## 协作模式</div>
+                <div>- 产出通常传给 Edda(PPT) + Grace(邮件)</div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 8: Chief Capability Dictionary */}
           <section id="capability">
             <h2 className="text-xl font-black flex items-center text-gray-900 mb-5">
-              <Shield className="w-5 h-5 mr-3 text-violet-500" /> 7. Chief 能力字典 (Capability Dictionary)
+              <Shield className="w-5 h-5 mr-3 text-violet-500" /> 8. Chief 能力字典 (Capability Dictionary)
             </h2>
             <div className="bg-violet-50 border-l-4 border-violet-500 p-5 rounded-r-xl mb-5">
               <p className="text-gray-700 leading-relaxed text-sm">
@@ -315,7 +433,7 @@ export default function LogicWhitepaper() {
           {/* Section 8: Human-in-the-Loop Approval */}
           <section id="approval">
             <h2 className="text-xl font-black flex items-center text-gray-900 mb-5">
-              <ShieldCheck className="w-5 h-5 mr-3 text-amber-500" /> 8. Human-in-the-Loop 审批闭环
+              <ShieldCheck className="w-5 h-5 mr-3 text-amber-500" /> 9. Human-in-the-Loop 审批闭环
             </h2>
             <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-5">
               <p className="text-gray-700 leading-relaxed text-sm">
@@ -408,7 +526,7 @@ export default function LogicWhitepaper() {
           {/* Section 9: Chat-to-Task Integration */}
           <section id="chat2task">
             <h2 className="text-xl font-black flex items-center text-gray-900 mb-5">
-              <MessageSquare className="w-5 h-5 mr-3 text-teal-500" /> 9. 对话 → 任务执行打通
+              <MessageSquare className="w-5 h-5 mr-3 text-teal-500" /> 10. 对话 → 任务执行打通
             </h2>
             <div className="bg-teal-50 border-l-4 border-teal-500 p-5 rounded-r-xl mb-5">
               <p className="text-gray-700 leading-relaxed text-sm">

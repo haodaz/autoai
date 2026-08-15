@@ -5,6 +5,7 @@ import {
   loadMemoriesByDate,
   loadSoulFile,
   writeSoulFile,
+  purgeExpiredMemories,
 } from '@/lib/memory-engine';
 import { loadAgentConfig } from '@/lib/bristh-config';
 
@@ -101,11 +102,13 @@ ${existingSoul ? `${agentName} 当前的灵魂文件（长期记忆）：\n${exi
 
         if (dreamResult?.soul) {
           await writeSoulFile(agentId, dreamResult.soul);
+          // Purge expired memories based on retention policy
+          const purged = await purgeExpiredMemories(agentId);
           results[agentId] = {
             status: 'success',
             memoriesProcessed: todayMemories.length,
             insights: dreamResult.insights || '',
-            pruned: dreamResult.pruneIds?.length || 0,
+            pruned: purged,
           };
         } else {
           results[agentId] = { status: 'failed', reason: 'Could not parse dream output' };

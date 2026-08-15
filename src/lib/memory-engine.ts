@@ -282,3 +282,67 @@ export async function deleteMemory(agentId: string, memoryId: string): Promise<b
     return false;
   }
 }
+
+/**
+ * Purge expired memories based on importance-driven retention policy:
+ * - High importance (>0.7): permanent
+ * - Medium importance (0.4-0.7): 30 days
+ * - Low importance (<0.4): 7 days
+ * 
+ * Returns count of purged entries.
+ */
+export async function purgeExpiredMemories(agentId: string): Promise<number> {
+  const RETENTION_HIGH = Infinity;    // >0.7: permanent
+  const RETENTION_MED = 30;           // 0.4-0.7: 30 days
+  const RETENTION_LOW = 7;            // <0.4: 7 days
+
+  let purgeCount = 0;
+  const now = Date.now();
+
+  try {
+    const dir = memoryDir(agentId);
+    const files = await fs.readdir(dir);
+    const jsonlFiles = files.filter(f => f.endsWith('.jsonl'));
+
+    for (const file of jsonlFiles) {
+      const filePath = path.join(dir, file);
+      const raw = await fs.readFile(filePath, 'utf-8');
+      const lines = raw.trim().split('\n').filter(Boolean);
+      
+      const kept = lines.filter(line => {
+        try {
+          const entry: MemoryEntry = JSON.parse(line);
+          const ageMs = now - new Date(entry.ts).getTime();
+          const ageDays = ageMs / (1000 * 60 * 60 * 24);
+
+          // Already archived → purge
+          if (entry.archived) { purgeCount++; return false; }
+
+          // Determine retention based on importance
+          const maxDays = entry.importance > 0.7
+            ? RETENTION_HIGH
+            : entry.importance >= 0.4
+              ? RETENTION_MED
+              : RETENTION_LOW;
+
+          if (ageDays > maxDays) {
+            purgeCount++;
+            return false;
+          }
+          return true;
+        } catch { return true; }
+      });
+
+      if (kept.length < lines.length) {
+        if (kept.length === 0) {
+          await fs.unlink(filePath); // Remove empty files
+        } else {
+          await fs.writeFile(filePath, kept.join('\n') + '\n', 'utf-8');
+        }
+      }
+    }
+  } catch {}
+
+  return purgeCount;
+}
+
