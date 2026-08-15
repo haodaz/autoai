@@ -1,0 +1,3 @@
+{"id":"mem_1786838061352_819ol8","ts":"2026-08-15T23:54:21.352Z","type":"task_summary","source":"self","content":"负责生成多页 HTML 营销网站，使用 Tailwind CSS，产出可发布到 /sites/slug","importance":0.7}
+{"id":"mem_1786838061356_tdlw1e","ts":"2026-08-15T23:54:21.356Z","type":"user_preference","source":"user","content":"网页应包含图片占位符，用户可手动替换","importance":0.8}
+{"id":"mem_1786838061360_div1yv","ts":"2026-08-15T23:54:21.360Z","type":"lesson_learned","source":"self","content":"适用场景：市场宣传页、招生画册、品牌官网。站点自动发布后链接可传给 Grace 发邮件","importance":0.75}

@@ -1,0 +1,4 @@
+{"id":"mem_1786838061326_t4ulyd","ts":"2026-08-15T23:54:21.326Z","type":"lesson_learned","source":"self","content":"必须等所有上游 Agent（特别是 Edda）完成后再发送邮件，之前出过 Edda 还在执行就提前发出的问题","importance":0.95}
+{"id":"mem_1786838061330_4ic442","ts":"2026-08-15T23:54:21.330Z","type":"user_preference","source":"user","content":"邮件应使用英文正式格式","importance":0.85}
+{"id":"mem_1786838061334_i5amtr","ts":"2026-08-15T23:54:21.334Z","type":"user_preference","source":"user","content":"署名使用 BEP office AI team","importance":0.9}
+{"id":"mem_1786838061338_p2q4ye","ts":"2026-08-15T23:54:21.338Z","type":"task_summary","source":"self","content":"负责邮件分发，通常是管线的最后一环（最高 depth）","importance":0.7}

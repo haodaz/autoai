@@ -2,40 +2,67 @@ import { NextResponse } from 'next/server';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import {
   listAgentsWithMemory,
-  loadMemoriesByDate,
+  loadAgentMemories,
   loadSoulFile,
   writeSoulFile,
   purgeExpiredMemories,
 } from '@/lib/memory-engine';
 import { loadAgentConfig } from '@/lib/bristh-config';
+import fs from 'fs/promises';
+import path from 'path';
 
 export const maxDuration = 300; // Up to 5 minutes for all agents
+
+// Track last dreaming time per agent
+const LAST_DREAM_FILE = path.join(process.cwd(), 'public', 'characters', '.last_dream.json');
+
+async function getLastDreamTimes(): Promise<Record<string, string>> {
+  try {
+    const raw = await fs.readFile(LAST_DREAM_FILE, 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+async function saveLastDreamTimes(times: Record<string, string>): Promise<void> {
+  await fs.writeFile(LAST_DREAM_FILE, JSON.stringify(times, null, 2), 'utf-8');
+}
 
 /**
  * Dreaming Agent — 每日记忆整理系统
  * 
  * 灵感来源：海马体记忆回放 (Hippocampal Replay)
- * - NREM 巩固：归纳当日经验，更新灵魂文件
- * - REM 做梦：交叉关联不同任务的经验，发现模式
+ * - NREM 巩固：归纳经验，更新灵魂文件
+ * - REM 做梦：交叉关联不同任务的经验
  * - 选择性遗忘：标记低价值记忆
  * 
- * 可通过 Vercel Cron 或手动 GET 触发
+ * ?force=true 可强制处理所有记忆（首次初始化用）
+ * 否则只处理上次做梦之后的新记忆
  */
 export async function GET(req: Request) {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const url = new URL(req.url);
+    const forceAll = url.searchParams.get('force') === 'true';
+    const now = new Date().toISOString();
     const agents = await listAgentsWithMemory();
+    const lastDreamTimes = await getLastDreamTimes();
     const results: Record<string, any> = {};
 
     for (const agentId of agents) {
-      if (agentId === 'chief') continue; // Skip orchestrator
+      if (agentId === 'chief') continue;
 
       try {
-        const todayMemories = await loadMemoriesByDate(agentId, today);
-        
-        // Skip if no memories today
-        if (todayMemories.length === 0) {
-          results[agentId] = { status: 'skipped', reason: 'no memories today' };
+        // Load all memories, then filter to only new ones
+        const allMemories = await loadAgentMemories(agentId, 100);
+        const lastDream = lastDreamTimes[agentId];
+
+        const newMemories = forceAll
+          ? allMemories
+          : allMemories.filter(m => !lastDream || m.ts > lastDream);
+
+        if (newMemories.length === 0) {
+          results[agentId] = { status: 'skipped', reason: 'no new memories since last dream' };
           continue;
         }
 
@@ -43,37 +70,35 @@ export async function GET(req: Request) {
         const config = await loadAgentConfig(agentId);
         const agentName = config?.name || agentId;
 
-        const memoriesText = todayMemories.map((m, i) => 
+        const memoriesText = newMemories.map((m, i) => 
           `[${i + 1}] (${m.type}, importance=${m.importance}) ${m.content}`
         ).join('\n');
 
-        // Dreaming prompt — inspired by hippocampal replay
         const dreamingPrompt = `你是 ${agentName} 的潜意识记忆整理系统（Dreaming Agent）。
 
 你正在进入"做梦"模式——就像人类大脑在睡眠中进行海马体记忆回放一样。
 
-今天 ${agentName} 经历了以下事件：
+以下是 ${agentName} 需要整理的${forceAll ? '全部' : '新增'}记忆（共 ${newMemories.length} 条）：
 ${memoriesText}
 
-${existingSoul ? `${agentName} 当前的灵魂文件（长期记忆）：\n${existingSoul}` : `${agentName} 还没有灵魂文件，这是第一次做梦。`}
+${existingSoul ? `${agentName} 当前的灵魂文件（长期记忆）：\n${existingSoul}` : `${agentName} 还没有灵魂文件，这是第一次做梦。请根据以上记忆创建初始灵魂文件。`}
 
 请执行以下记忆整理操作：
 
-1. **NREM 巩固**：今天学到了什么？有什么重要模式？提取关键经验。
+1. **NREM 巩固**：提取关键经验和模式，有什么重要教训？
 2. **REM 联想**：不同任务之间有什么关联？有什么创造性发现？
-3. **更新灵魂文件**：合并今天的关键经验到长期记忆中。保持条理清晰。
-4. **遗忘建议**：哪些记忆不重要（importance < 0.3），可以标记为过期？
+3. **更新灵魂文件**：将新的关键经验合并到灵魂文件中。${existingSoul ? '保留现有有价值的内容，新增/修改有变化的部分。' : ''}
+4. **遗忘建议**：哪些记忆不重要（importance < 0.3），可以淡化？
 
 输出格式（严格 JSON）：
 {
   "soul": "完整的更新后灵魂文件内容（Markdown 格式）",
-  "insights": "今日关键洞察总结（1-2 句话）",
-  "pruneIds": ["要标记为过期的记忆ID列表"]
+  "insights": "本次整理的关键洞察总结（1-2 句话）"
 }
 
-灵魂文件格式建议：
+灵魂文件格式：
 # ${agentName} 的灵魂文件
-> 最后更新: ${today} by Dreaming Agent
+> 最后更新: ${now.split('T')[0]} by Dreaming Agent
 
 ## 核心能力认知
 ## 已学教训  
@@ -102,13 +127,14 @@ ${existingSoul ? `${agentName} 当前的灵魂文件（长期记忆）：\n${exi
 
         if (dreamResult?.soul) {
           await writeSoulFile(agentId, dreamResult.soul);
-          // Purge expired memories based on retention policy
           const purged = await purgeExpiredMemories(agentId);
+          // Record dream time
+          lastDreamTimes[agentId] = now;
           results[agentId] = {
             status: 'success',
-            memoriesProcessed: todayMemories.length,
+            memoriesProcessed: newMemories.length,
             insights: dreamResult.insights || '',
-            pruned: purged,
+            purged,
           };
         } else {
           results[agentId] = { status: 'failed', reason: 'Could not parse dream output' };
@@ -118,9 +144,13 @@ ${existingSoul ? `${agentName} 当前的灵魂文件（长期记忆）：\n${exi
       }
     }
 
+    // Save last dream times
+    await saveLastDreamTimes(lastDreamTimes);
+
     return NextResponse.json({
       ok: true,
-      date: today,
+      timestamp: now,
+      forceAll,
       agentsProcessed: Object.keys(results).length,
       results,
     });

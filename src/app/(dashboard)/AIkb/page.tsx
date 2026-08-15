@@ -122,19 +122,44 @@ function AIMemoryTab() {
   const [editingSoul, setEditingSoul] = useState<string | null>(null);
   const [soulDraft, setSoulDraft] = useState('');
   const [loading, setLoading] = useState(true);
+  const [dreaming, setDreaming] = useState(false);
+  const [dreamResult, setDreamResult] = useState<any>(null);
+
+  const refreshStats = (agentList: AgentInfo[]) => {
+    agentList.forEach((a: AgentInfo) => {
+      fetch(`/api/memory/${a.id}?type=stats`).then(r => r.json()).then(s => {
+        setStats(prev => ({ ...prev, [a.id]: s }));
+      }).catch(() => {});
+    });
+  };
 
   useEffect(() => {
     fetch('/api/bristh/agents/config').then(r => r.json()).then(data => {
       const agentList = (Array.isArray(data) ? data : []).filter((a: any) => a.id !== 'chief');
       setAgents(agentList);
-      // Fetch stats for each agent
-      agentList.forEach((a: AgentInfo) => {
-        fetch(`/api/memory/${a.id}?type=stats`).then(r => r.json()).then(s => {
-          setStats(prev => ({ ...prev, [a.id]: s }));
-        }).catch(() => {});
-      });
+      refreshStats(agentList);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  const triggerDreaming = async (force: boolean = false) => {
+    setDreaming(true);
+    setDreamResult(null);
+    try {
+      const res = await fetch(`/api/cron/dreaming${force ? '?force=true' : ''}`);
+      const data = await res.json();
+      setDreamResult(data);
+      message.success(`🧠 做梦完成！处理了 ${data.agentsProcessed} 个 Agent`);
+      // Refresh stats and reload expanded agent
+      refreshStats(agents);
+      if (expandedAgent) {
+        loadAgentMemories(expandedAgent);
+      }
+    } catch {
+      message.error('做梦失败');
+    } finally {
+      setDreaming(false);
+    }
+  };
 
   const loadAgentMemories = async (agentId: string) => {
     try {
@@ -196,11 +221,53 @@ function AIMemoryTab() {
     dreaming_insight: { label: '梦境洞察', color: 'bg-rose-100 text-rose-700' },
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Spin size="large" /></div>;
+  if (loading) return (<div className="flex items-center justify-center h-64"><Spin size="large" /></div>);
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-400">每个 AI 从任务和交互中积累的经验、教训和灵魂文件</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <p className="text-sm text-gray-400">每个 AI 从任务和交互中积累的经验、教训和灵魂文件</p>
+        <div className="flex items-center gap-2">
+          <button onClick={() => triggerDreaming(false)} disabled={dreaming}
+            className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs font-bold flex items-center gap-2 hover:shadow-lg disabled:opacity-50 transition-all">
+            {dreaming ? (
+              <><span className="animate-spin">🌀</span> 做梦中…</>
+            ) : (
+              <><Brain className="w-3.5 h-3.5" /> 🌙 触发做梦（新记忆）</>
+            )}
+          </button>
+          <button onClick={() => triggerDreaming(true)} disabled={dreaming}
+            className="px-3 py-2 bg-white text-purple-600 border border-purple-200 rounded-lg text-xs font-bold hover:bg-purple-50 disabled:opacity-50 transition-all">
+            ♾️ 全量整理
+          </button>
+        </div>
+      </div>
+
+      {/* Dream result banner */}
+      {dreamResult && (
+        <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-rose-50 rounded-xl p-4 border border-purple-100">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm">🧠</span>
+            <span className="text-xs font-bold text-purple-700">做梦报告</span>
+            <span className="text-[10px] text-gray-400">{dreamResult.timestamp?.split('T')[0]}</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {Object.entries(dreamResult.results || {}).map(([agentId, r]: [string, any]) => (
+              <div key={agentId} className={`px-3 py-2 rounded-lg text-[10px] ${
+                r.status === 'success' ? 'bg-green-50 text-green-700' :
+                r.status === 'skipped' ? 'bg-gray-50 text-gray-400' :
+                'bg-red-50 text-red-600'
+              }`}>
+                <span className="font-bold">{agentId}</span>
+                {r.status === 'success' && <span className="block">{r.memoriesProcessed} 条 · {r.insights?.slice(0, 40)}</span>}
+                {r.status === 'skipped' && <span className="block">跳过</span>}
+                {r.status === 'error' && <span className="block">出错</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         {agents.map(agent => {
           const agentStats = stats[agent.id];

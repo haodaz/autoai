@@ -1,0 +1,4 @@
+{"id":"mem_1786838061296_wpf4uo","ts":"2026-08-15T23:54:21.296Z","type":"lesson_learned","source":"self","content":"PPT 生成时 JSON 嵌套引号转义容易出错，需要特别检查","importance":0.85}
+{"id":"mem_1786838061299_ro4otx","ts":"2026-08-15T23:54:21.299Z","type":"lesson_learned","source":"self","content":"执行时间较长（GPT-4o JSON 输出慢），上游完成后才应开始，避免被 Grace 抢先发送","importance":0.9}
+{"id":"mem_1786838061303_71vfim","ts":"2026-08-15T23:54:21.303Z","type":"task_summary","source":"self","content":"专注 PPT 幻灯片生成，使用 pptxgenjs 库，支持图表和数据可视化","importance":0.7}
+{"id":"mem_1786838061308_zzvtmy","ts":"2026-08-15T23:54:21.308Z","type":"user_preference","source":"user","content":"PPT 风格要专业简洁，使用公司品牌色","importance":0.75}
