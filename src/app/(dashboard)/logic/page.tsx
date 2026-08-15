@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BookOpen, Database, Cpu, Users, GitMerge, CheckCircle, Presentation, Calendar, Mail, FileText, Activity, Settings, Layers, Shield, ChevronRight } from 'lucide-react';
+import { BookOpen, Database, Cpu, Users, GitMerge, CheckCircle, Presentation, Calendar, Mail, FileText, Activity, Settings, Layers, Shield, ChevronRight, ShieldCheck, MessageSquare } from 'lucide-react';
 
 const SECTIONS = [
   { id: 'arch', label: '核心解耦架构', icon: GitMerge },
@@ -11,6 +11,8 @@ const SECTIONS = [
   { id: 'assembly', label: 'AI 装配系统', icon: Settings },
   { id: 'knowledge', label: '分层知识库', icon: Layers },
   { id: 'capability', label: 'Chief 能力字典', icon: Shield },
+  { id: 'approval', label: '审批闭环机制', icon: ShieldCheck },
+  { id: 'chat2task', label: '对话→任务打通', icon: MessageSquare },
 ];
 
 export default function LogicWhitepaper() {
@@ -43,7 +45,7 @@ export default function LogicWhitepaper() {
           ))}
         </nav>
         <div className="px-3 pt-4 border-t border-gray-100">
-          <p className="text-[10px] text-gray-300 font-medium">V2.0.0 — Updated with Assembly</p>
+          <p className="text-[10px] text-gray-300 font-medium">V3.0.0 — Approval + Chat-to-Task</p>
         </div>
       </div>
 
@@ -57,7 +59,7 @@ export default function LogicWhitepaper() {
               <BookOpen className="w-8 h-8 text-indigo-500 mr-4" /> Bristh Multi-Agent 架构白皮书
             </h1>
             <p className="text-gray-400 mt-2 text-sm font-medium">
-              V2.0.0 — 系统底层逻辑、AI 装配系统与知识库分层说明手册
+              V3.0.0 — 系统底层逻辑、审批闭环、对话任务打通与知识库分层说明手册
             </p>
           </div>
 
@@ -307,6 +309,163 @@ export default function LogicWhitepaper() {
               <p className="text-xs text-gray-400 mt-3">
                 运营人员可直接编辑此 YAML 文件来调整 Chief 的分发策略，无需修改代码。
               </p>
+            </div>
+          </section>
+
+          {/* Section 8: Human-in-the-Loop Approval */}
+          <section id="approval">
+            <h2 className="text-xl font-black flex items-center text-gray-900 mb-5">
+              <ShieldCheck className="w-5 h-5 mr-3 text-amber-500" /> 8. Human-in-the-Loop 审批闭环
+            </h2>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-5">
+              <p className="text-gray-700 leading-relaxed text-sm">
+                引入 <strong>人工审批检查点</strong>，用户在创建任务时可以选择哪些 Agent 的产出需要人工确认。
+                被选中的 Agent 执行完毕后进入 <code className="bg-amber-100 px-1 text-xs">AWAITING_APPROVAL</code> 状态，
+                Grace（邮件分发）会等待所有审批完成后才执行，形成完整闭环。
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="border border-gray-200 p-5 rounded-2xl bg-white shadow-sm col-span-1 md:col-span-2">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">两步式创建 + 审批选择</h3>
+                <div className="flex items-center justify-center gap-2 text-xs text-gray-600 py-3 flex-wrap">
+                  <span className="px-3 py-1.5 bg-blue-50 rounded-lg font-bold text-blue-600 border border-blue-100">Step 1: 提交内容</span>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                  <span className="px-3 py-1.5 bg-indigo-50 rounded-lg font-bold text-indigo-600 border border-indigo-100">Chief AI 分析意图</span>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                  <span className="px-3 py-1.5 bg-violet-50 rounded-lg font-bold text-violet-600 border border-violet-100">Step 2: 选审批节点</span>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                  <span className="px-3 py-1.5 bg-emerald-50 rounded-lg font-bold text-emerald-600 border border-emerald-100">确认派发执行</span>
+                </div>
+                <ul className="list-disc pl-5 space-y-1.5 text-gray-600 text-xs mt-3">
+                  <li>Step 1 可选 <strong>"全自动"</strong> 模式跳过 Step 2，直接派发</li>
+                  <li>Step 2 展示 Chief 的分解方案 + AI 基于 complexity 推荐需要审批的任务</li>
+                  <li>勾选审批时需要邮箱绑定（用于发送审批通知邮件）</li>
+                </ul>
+              </div>
+              <div className="border border-gray-200 p-5 rounded-2xl bg-white shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">Task 状态流转</h3>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-gray-100 rounded font-mono font-bold text-gray-600">PENDING</span>
+                    <ChevronRight className="w-3 h-3 text-gray-300" />
+                    <span className="px-2 py-1 bg-blue-100 rounded font-mono font-bold text-blue-600">RUNNING</span>
+                    <ChevronRight className="w-3 h-3 text-gray-300" />
+                    <span className="px-2 py-1 bg-emerald-100 rounded font-mono font-bold text-emerald-600">COMPLETED ✅</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-gray-100 rounded font-mono font-bold text-gray-600">PENDING</span>
+                    <ChevronRight className="w-3 h-3 text-gray-300" />
+                    <span className="px-2 py-1 bg-blue-100 rounded font-mono font-bold text-blue-600">RUNNING</span>
+                    <ChevronRight className="w-3 h-3 text-gray-300" />
+                    <span className="px-2 py-1 bg-amber-100 rounded font-mono font-bold text-amber-600">AWAITING 🟡</span>
+                    <ChevronRight className="w-3 h-3 text-gray-300" />
+                    <span className="px-2 py-1 bg-emerald-100 rounded font-mono font-bold text-emerald-600">APPROVED ✅</span>
+                  </div>
+                </div>
+              </div>
+              <div className="border border-gray-200 p-5 rounded-2xl bg-white shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">审批响应方式</h3>
+                <ul className="space-y-2 text-xs text-gray-600">
+                  <li className="flex items-start gap-2"><span className="text-base">🖥️</span> <strong>在线审批</strong>：Office 看板 Copilot 编辑 → 批准按钮</li>
+                  <li className="flex items-start gap-2"><span className="text-base">📧</span> <strong>邮件回复</strong>：Daemon 解析回复内容（AI 驱动）</li>
+                  <li className="flex items-start gap-2"><span className="text-base">✏️</span> <strong>修改重审</strong>：用户可 Copilot 修改后重新审批</li>
+                </ul>
+              </div>
+              <div className="border border-gray-200 p-5 rounded-2xl bg-white shadow-sm col-span-1 md:col-span-2">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">新增 API 路由</h3>
+                <ul className="space-y-1.5 text-sm text-gray-600 font-mono">
+                  <li>📂 <code className="text-xs">api/bristh/orchestrate/analyze/</code> → Chief 分析（不执行）</li>
+                  <li>📂 <code className="text-xs">api/bristh/orchestrate/confirm/</code> → 确认创建 + 开始执行</li>
+                  <li>📂 <code className="text-xs">api/bristh/approve/</code> → 单个任务审批</li>
+                  <li>📂 <code className="text-xs">api/bristh/notify/</code> → 审批通知邮件（SMTP）</li>
+                  <li>📂 <code className="text-xs">api/bristh/approval-reply/</code> → 邮件回复解析（AI 驱动）</li>
+                </ul>
+              </div>
+              <div className="border border-amber-200 bg-amber-50 p-5 rounded-2xl shadow-sm col-span-1 md:col-span-2">
+                <h3 className="text-sm font-bold text-amber-800 mb-2">📬 审批邮件 vs Grace 管线邮件</h3>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <p className="font-bold text-gray-700 mb-1">审批通知邮件 (notify)</p>
+                    <ul className="space-y-1 text-gray-600">
+                      <li>• 发给：系统内部用户</li>
+                      <li>• 目的：人工确认产物</li>
+                      <li>• 不在 Kanban 显示</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-700 mb-1">Grace 管线邮件</p>
+                    <ul className="space-y-1 text-gray-600">
+                      <li>• 发给：外部客户</li>
+                      <li>• 目的：商务沟通</li>
+                      <li>• 在 Kanban 显示</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 9: Chat-to-Task Integration */}
+          <section id="chat2task">
+            <h2 className="text-xl font-black flex items-center text-gray-900 mb-5">
+              <MessageSquare className="w-5 h-5 mr-3 text-teal-500" /> 9. 对话 → 任务执行打通
+            </h2>
+            <div className="bg-teal-50 border-l-4 border-teal-500 p-5 rounded-r-xl mb-5">
+              <p className="text-gray-700 leading-relaxed text-sm">
+                将 <strong>群聊圆桌</strong> 和 <strong>1v1 AI 员工对话</strong> 与任务执行管线无缝衔接。
+                讨论成果可以一键转化为实际任务或让 Agent 立刻执行，消除「聊完了还要手动开任务」的断裂感。
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="border border-gray-200 p-5 rounded-2xl bg-white shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">🎯 群聊 → 转为任务</h3>
+                <ul className="space-y-2 text-xs text-gray-600">
+                  <li>• 群聊顶部导航新增 <strong className="text-emerald-600">▶ 转为任务</strong> 按钮</li>
+                  <li>• 点击后自动收集完整对话记录，格式化为 <code className="bg-gray-100 px-1 text-[10px]">[Alice, 方案架构师]: 内容</code></li>
+                  <li>• 跳转到 new-task 页面，内容已自动填入</li>
+                  <li>• 用户选择"全自动"或"人工审核"后正式派发</li>
+                </ul>
+              </div>
+              <div className="border border-gray-200 p-5 rounded-2xl bg-white shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">⚡ 1v1 对话 → 执行任务</h3>
+                <ul className="space-y-2 text-xs text-gray-600">
+                  <li>• 消息气泡下方 <strong className="text-emerald-600">⚡ Execute</strong> 按钮</li>
+                  <li>• 群聊中点击 → 跳转到该 Agent 的 1v1 对话页面</li>
+                  <li>• 1v1 中点击 → Agent 分析上下文，确认任务后执行</li>
+                  <li>• Agent 已有 Tool Calling 能力，自然进入执行流程</li>
+                </ul>
+              </div>
+              <div className="border border-gray-200 p-5 rounded-2xl bg-white shadow-sm col-span-1 md:col-span-2">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">💬 消息气泡操作栏</h3>
+                <p className="text-xs text-gray-500 mb-3">每条 AI 消息气泡下方增加一行小 icon，hover 时显示：</p>
+                <div className="flex items-center gap-6 text-xs">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">
+                    <span className="text-gray-400">📋</span> <strong className="text-gray-700">Copy</strong> <span className="text-gray-400">— 复制消息内容</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <span className="text-emerald-500">⚡</span> <strong className="text-emerald-700">Execute</strong> <span className="text-gray-400">— 让 Agent 执行</span>
+                  </div>
+                </div>
+              </div>
+              <div className="border border-gray-200 p-5 rounded-2xl bg-white shadow-sm col-span-1 md:col-span-2">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">数据流：WorkspaceContext 跨页面传递</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-600 py-2 flex-wrap">
+                    <span className="px-3 py-1.5 bg-teal-50 rounded-lg font-bold text-teal-600 border border-teal-100">群聊 ▶ 按钮</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                    <span className="px-3 py-1.5 bg-violet-50 rounded-lg font-bold text-violet-600 border border-violet-100">setPendingNewTaskInput()</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                    <span className="px-3 py-1.5 bg-blue-50 rounded-lg font-bold text-blue-600 border border-blue-100">/new-task 自动填入</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-600 py-2 flex-wrap">
+                    <span className="px-3 py-1.5 bg-teal-50 rounded-lg font-bold text-teal-600 border border-teal-100">群聊 ⚡ 按钮</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                    <span className="px-3 py-1.5 bg-violet-50 rounded-lg font-bold text-violet-600 border border-violet-100">setPendingAgentTask()</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                    <span className="px-3 py-1.5 bg-blue-50 rounded-lg font-bold text-blue-600 border border-blue-100">/AImployee → 自动打开对话</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
