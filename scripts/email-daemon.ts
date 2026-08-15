@@ -8,7 +8,9 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const IMAP_USER = process.env.IMAP_USER;
 const IMAP_PASSWORD = process.env.IMAP_PASSWORD;
-const ORCHESTRATE_URL = 'http://localhost:5859/api/bristh/orchestrate';
+const BASE_URL = 'http://localhost:5859';
+const ORCHESTRATE_URL = `${BASE_URL}/api/bristh/orchestrate`;
+const APPROVAL_REPLY_URL = `${BASE_URL}/api/bristh/approval-reply`;
 
 if (!IMAP_USER || !IMAP_PASSWORD) {
   console.error('❌ Error: IMAP_USER or IMAP_PASSWORD is not set in .env.local');
@@ -29,6 +31,45 @@ const config = {
 
 let isProcessing = false;
 
+/**
+ * Check if an email is a reply to an approval notification.
+ * Matches the In-Reply-To or References header against stored approvalEmailId.
+ */
+async function findApprovalContext(inReplyTo: string | undefined, references: string | undefined): Promise<string | null> {
+  if (!inReplyTo && !references) return null;
+
+  // Collect all message IDs from headers
+  const messageIds: string[] = [];
+  if (inReplyTo) messageIds.push(inReplyTo.trim());
+  if (references) {
+    // References can contain multiple message IDs separated by spaces
+    references.split(/\s+/).forEach(ref => {
+      const cleaned = ref.trim();
+      if (cleaned) messageIds.push(cleaned);
+    });
+  }
+
+  // Search for matching TaskContext
+  for (const msgId of messageIds) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/bristh/tasks?approvalEmailId=${encodeURIComponent(msgId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.contextId) return data.contextId;
+      }
+    } catch {}
+    
+    // Also try direct DB-style matching via a simple API
+    if (msgId.includes('approval-')) {
+      // Extract contextId from our message ID format: <approval-{contextId}-{uuid}@bristh.autoffice>
+      const match = msgId.match(/approval-([a-z0-9]+)-/);
+      if (match) return match[1];
+    }
+  }
+
+  return null;
+}
+
 async function pollEmails(connection: imaps.ImapSimple) {
   if (isProcessing) return;
   isProcessing = true;
@@ -36,7 +77,7 @@ async function pollEmails(connection: imaps.ImapSimple) {
   try {
     await connection.openBox('INBOX');
     const searchCriteria = ['UNSEEN'];
-    const fetchOptions = { bodies: [''], markSeen: true };
+    const fetchOptions = { bodies: ['', 'HEADER'], markSeen: true };
     
     const messages = await connection.search(searchCriteria, fetchOptions);
     
@@ -54,13 +95,52 @@ async function pollEmails(connection: imaps.ImapSimple) {
       const subject = parsed.subject || 'No Subject';
       const from = parsed.from?.text || 'Unknown Sender';
       const body = parsed.text || parsed.html?.replace(/<[^>]+>/g, '') || 'No content';
+      const inReplyTo = parsed.inReplyTo;
+      const references = typeof parsed.references === 'string' ? parsed.references : Array.isArray(parsed.references) ? parsed.references.join(' ') : undefined;
       
       console.log(`\n========================================`);
       console.log(`📬 NEW MAIL: ${subject}`);
       console.log(`👤 FROM: ${from}`);
+      if (inReplyTo) console.log(`↩️ IN-REPLY-TO: ${inReplyTo}`);
       console.log(`========================================`);
-      
-      // Construct raw content for Orchestrator
+
+      // ====== Check if this is an approval reply ======
+      const approvalContextId = await findApprovalContext(inReplyTo, references);
+
+      if (approvalContextId) {
+        console.log(`🔍 Detected approval reply for context: ${approvalContextId}`);
+        console.log(`📋 Routing to approval-reply handler...`);
+
+        try {
+          const response = await fetch(APPROVAL_REPLY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contextId: approvalContextId,
+              replyContent: body,
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Approval reply processed: ${data.results?.length || 0} action(s)`);
+            if (data.allApproved) {
+              console.log(`🎉 All tasks approved! Grace will handle final dispatch.`);
+            } else {
+              console.log(`⏳ ${data.remainingApprovals} task(s) still awaiting approval.`);
+            }
+          } else {
+            const errorData = await response.json();
+            console.error(`❌ Approval reply handler error:`, errorData);
+          }
+        } catch (err: any) {
+          console.error(`❌ Failed to process approval reply:`, err.message);
+        }
+
+        continue; // Skip orchestrate flow for approval replies
+      }
+
+      // ====== Normal new task flow ======
       const rawContent = `[邮件指令]\n发件人: ${from}\n主题: ${subject}\n\n正文:\n${body}`;
 
       console.log(`🚀 Dispatching task to Chief Orchestrator...`);
@@ -87,7 +167,7 @@ async function pollEmails(connection: imaps.ImapSimple) {
             const agentName = t.agent.toLowerCase();
             try {
               console.log(`➡️  Starting ${t.agent}...`);
-              const agentRes = await fetch(`http://localhost:5859/api/bristh/agents/${agentName}`, {
+              const agentRes = await fetch(`${BASE_URL}/api/bristh/agents/${agentName}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ taskId: t.id })
@@ -105,11 +185,27 @@ async function pollEmails(connection: imaps.ImapSimple) {
           // 1. Run all other agents concurrently
           await Promise.all(otherTasks.map(runAgent));
           
-          // 2. Run Grace only after everyone else is done
-          if (graceTasks.length > 0) {
-             console.log(`⏳ Dependencies met. Starting Grace for attachment delivery...`);
-             await Promise.all(graceTasks.map(runAgent));
+          // 2. Check if any tasks require approval
+          const hasApprovalTasks = otherTasks.some((t: any) => t.requiresApproval);
+          
+          if (hasApprovalTasks) {
+            console.log(`⏸️ Some tasks require approval. Sending notification email...`);
+            try {
+              await fetch(`${BASE_URL}/api/bristh/notify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contextId: data.contextId }),
+              });
+              console.log(`📧 Approval notification sent. Waiting for user response.`);
+            } catch (err: any) {
+              console.error(`❌ Notify error:`, err.message);
+            }
+          } else if (graceTasks.length > 0) {
+            // 3. Run Grace only if no approval needed and after everyone else is done
+            console.log(`⏳ Dependencies met. Starting Grace for attachment delivery...`);
+            await Promise.all(graceTasks.map(runAgent));
           }
+          
           console.log(`🎉 All background agents have finished processing the email!`);
         } else {
           const errorData = await response.json();

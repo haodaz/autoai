@@ -20,6 +20,19 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const contextId = searchParams.get('contextId');
     const mode = searchParams.get('mode');
+    const approvalEmailId = searchParams.get('approvalEmailId');
+
+    // Approval email ID lookup (used by email-daemon to match replies)
+    if (approvalEmailId) {
+      const context = await prisma.taskContext.findFirst({
+        where: { approvalEmailId },
+        select: { id: true },
+      });
+      if (context) {
+        return NextResponse.json({ contextId: context.id });
+      }
+      return NextResponse.json({ contextId: null });
+    }
 
     // Get current session for data isolation
     const session = await getSession();

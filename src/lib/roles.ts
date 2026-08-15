@@ -14,6 +14,7 @@ export interface SessionUser {
 
 /** Which tabs each role can see */
 export const TAB_PERMISSIONS: Record<string, UserRole[]> = {
+  'new-task': ['admin', 'user'],
   office:    ['admin', 'user'],
   employees: ['admin', 'user'],
   group_chat:['admin', 'user'],

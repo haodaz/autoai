@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, Send, Download, FileText, Calendar, Mail, Sparkles, Bot, User, ChevronRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Download, FileText, Calendar, Mail, Sparkles, Bot, User, ChevronRight, Loader2, Copy, Zap } from 'lucide-react';
 import { marked } from 'marked';
 import { useTranslation } from 'react-i18next';
+import { message } from 'antd';
 import VoiceInputButton from '@/components/ui/VoiceInputButton';
+import { useWorkspace } from '@/components/layout/WorkspaceContext';
 
 interface AgentConfig {
   id: string;
@@ -57,6 +59,8 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { pendingAgentTask, setPendingAgentTask } = useWorkspace();
+  const pendingTaskHandled = useRef(false);
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
 
@@ -81,6 +85,17 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
       }]);
     }
   }, [agent.id, isEn]);
+
+  // Handle pending agent task from group chat navigation
+  useEffect(() => {
+    if (pendingAgentTask && pendingAgentTask.agentId === agent.id && !pendingTaskHandled.current) {
+      pendingTaskHandled.current = true;
+      const taskMsg = `以下是之前在群聊中的讨论记录：\n\n${pendingAgentTask.context}\n\n---\n\n请你分析上面的讨论内容，明确说明你接到了什么任务、你将要做什么。等我确认后再执行。`;
+      setPendingAgentTask(null);
+      // Delay slightly so greeting renders first
+      setTimeout(() => sendMessage(taskMsg), 500);
+    }
+  }, [pendingAgentTask, agent.id]);
 
   const colors = COLOR_MAP[agent.color] || COLOR_MAP.blue;
 
@@ -273,7 +288,7 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
                   )}
 
                   {/* Bubble */}
-                  <div className={`max-w-[75%] ${msg.role === 'user' ? 'text-right' : ''}`}>
+                  <div className={`max-w-[75%] group/bubble ${msg.role === 'user' ? 'text-right' : ''}`}>
                     <div
                       className={`inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                         msg.role === 'user'
@@ -292,6 +307,29 @@ export default function AgentChat({ agent, onBack }: { agent: AgentConfig; onBac
                         msg.content
                       )}
                     </div>
+
+                    {/* Bubble action bar */}
+                    {msg.role === 'assistant' && msg.content && msg.content !== '⏳' && (
+                      <div className="flex items-center gap-1 mt-1 ml-1 opacity-0 group-hover/bubble:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(msg.content); message.success('已复制'); }}
+                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="复制内容"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const taskMsg = `请你基于我们的对话，立刻执行任务。分析上下文，明确说明你接到了什么任务、你将要做什么。等我确认后再执行。`;
+                            sendMessage(taskMsg);
+                          }}
+                          className="p-1 rounded hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors"
+                          title="让 AI 执行任务"
+                        >
+                          <Zap className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
 
                     {/* Tool Call Cards */}
                     {msg.toolCalls && Object.values(msg.toolCalls).map(tc => (

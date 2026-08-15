@@ -75,7 +75,7 @@ If no exact date/time is mentioned, make a logical guess (Assume current year is
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: { 
-        status: 'COMPLETED',
+        status: task.requiresApproval ? 'AWAITING_APPROVAL' : 'COMPLETED',
         resultPayload: resultPayload
       }
     });

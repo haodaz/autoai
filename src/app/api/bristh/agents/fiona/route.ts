@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: { 
-        status: 'COMPLETED',
+        status: task.requiresApproval ? 'AWAITING_APPROVAL' : 'COMPLETED',
         resultPayload
       }
     });

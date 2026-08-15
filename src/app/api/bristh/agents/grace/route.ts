@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       where: { 
         contextId: task.contextId,
         id: { not: taskId },
-        status: 'COMPLETED'
+        status: { in: ['COMPLETED', 'APPROVED'] }
       }
     });
 

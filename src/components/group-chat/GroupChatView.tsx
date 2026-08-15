@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Spin, Modal, Checkbox, message, Popconfirm } from 'antd';
-import { Send, Plus, Users, Trash2, CheckCircle, XCircle, Settings, ArrowUp, ArrowDown } from 'lucide-react';
+import { Send, Plus, Users, Trash2, CheckCircle, XCircle, Settings, ArrowUp, ArrowDown, Play, Copy, Zap, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
+import { useWorkspace } from '@/components/layout/WorkspaceContext';
 
 // ── 聊天大厅卡片 ──
 function GroupChatLobby({ onEnterChat, allAgents }: { onEnterChat: (id: string) => void, allAgents: any[] }) {
@@ -178,6 +180,9 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
   const [sending, setSending] = useState(false);
   const [agentTyping, setAgentTyping] = useState<{ id: string, name: string } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [convertingToTask, setConvertingToTask] = useState(false);
+  const router = useRouter();
+  const { setPendingNewTaskInput, setPendingAgentTask } = useWorkspace();
   
   // Settings State
   const [speakingOrder, setSpeakingOrder] = useState<string[]>([]);
@@ -369,11 +374,36 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
           <div className="hidden md:block text-sm font-bold text-gray-500 truncate mr-4">
             {chatInfo.topic || 'Roundtable Discussion'}
           </div>
-          <button 
-            onClick={() => setSettingsOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-bold shrink-0"
-          >
-            <Settings className="w-4 h-4" /> {t('bristh.groupChat.settings', '设置')} </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={async () => {
+                if (messages.length === 0) return message.warning('没有对话内容可以转为任务');
+                setConvertingToTask(true);
+                // Format chat history with agent names
+                const transcript = messages.map(msg => {
+                  if (msg.senderId === 'USER') return `[用户]: ${msg.content}`;
+                  const agent = allAgents.find(a => a.id === msg.senderId);
+                  const label = agent ? `${agent.name}, ${agent.title}` : msg.senderId;
+                  return `[${label}]: ${msg.content}`;
+                }).join('\n\n');
+                const header = `以下是一段 AI 圆桌讨论记录，请根据讨论共识制定任务：\n\n---\n\n`;
+                setPendingNewTaskInput(header + transcript);
+                setConvertingToTask(false);
+                router.push('/new-task');
+              }}
+              disabled={convertingToTask || messages.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all text-xs font-bold shrink-0 shadow-sm shadow-emerald-500/20 disabled:opacity-50"
+            >
+              {convertingToTask ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+              转为任务
+            </button>
+            <button 
+              onClick={() => setSettingsOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-bold shrink-0"
+            >
+              <Settings className="w-4 h-4" /> {t('bristh.groupChat.settings', '设置')}
+            </button>
+          </div>
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
@@ -387,7 +417,7 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
                   <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gray-200 overflow-hidden border-2 border-white shadow-sm flex justify-center items-center font-bold text-gray-500">
                     {isUser ? 'U' : (agentInfo?.avatar ? <img src={agentInfo.avatar} className="w-full h-full object-cover"/> : agentInfo?.name?.[0])}
                   </div>
-                  <div>
+                  <div className="group/bubble">
                     {!isUser && <div className="text-xs font-bold text-gray-500 mb-1 ml-1">{agentInfo?.name}</div>}
                     <div className={`px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed ${isUser ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'}`}>
                       {msg.content}
@@ -401,6 +431,34 @@ function ChatRoom({ chatId, onBack, allAgents }: { chatId: string, onBack: () =>
                         </div>
                       )}
                     </div>
+                    {!isUser && !msg._temp && msg.content && (
+                      <div className="flex items-center gap-1 mt-1 ml-1 opacity-0 group-hover/bubble:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(msg.content); message.success('已复制'); }}
+                          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="复制内容"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                        {agentInfo && (
+                          <button
+                            onClick={() => {
+                              const context = messages.map(m => {
+                                if (m.senderId === 'USER') return `[用户]: ${m.content}`;
+                                const a = allAgents.find(ag => ag.id === m.senderId);
+                                return `[${a?.name || m.senderId}]: ${m.content}`;
+                              }).join('\n');
+                              setPendingAgentTask({ agentId: agentInfo.id, context });
+                              router.push('/AImployee');
+                            }}
+                            className="p-1 rounded hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors"
+                            title={`让 ${agentInfo.name} 执行`}
+                          >
+                            <Zap className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

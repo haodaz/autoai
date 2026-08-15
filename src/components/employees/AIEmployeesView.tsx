@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MessageSquare, Sparkles } from 'lucide-react';
 import AgentChat from './AgentChat';
 import { useTranslation } from 'react-i18next';
+import { useWorkspace } from '@/components/layout/WorkspaceContext';
 
 interface AgentConfig {
   id: string;
@@ -37,14 +38,20 @@ export default function AIEmployeesView() {
   const [loading, setLoading] = useState(true);
   const { i18n } = useTranslation();
   const isEn = i18n.language?.startsWith('en');
+  const { pendingAgentTask } = useWorkspace();
 
   useEffect(() => {
     fetch('/api/bristh/agents/config')
       .then(r => r.json())
       .then((data: AgentConfig[]) => {
-        // Filter out orchestrator (Chief) — they don't do 1v1 chat
-        setAgents(data.filter(a => a.role !== 'orchestrator' && a.enabled));
+        const filtered = data.filter(a => a.role !== 'orchestrator' && a.enabled);
+        setAgents(filtered);
         setLoading(false);
+        // Auto-open agent chat if coming from group chat with pending task
+        if (pendingAgentTask) {
+          const target = filtered.find(a => a.id === pendingAgentTask.agentId);
+          if (target) setSelectedAgent(target);
+        }
       })
       .catch(() => setLoading(false));
   }, []);

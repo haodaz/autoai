@@ -188,7 +188,7 @@ Rules:
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: { 
-        status: 'COMPLETED',
+        status: task.requiresApproval ? 'AWAITING_APPROVAL' : 'COMPLETED',
         resultPayload: resultPayload,
         thinkLog: thinkLog,
         toolCallsLog: toolCallsLog

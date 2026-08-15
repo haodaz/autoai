@@ -84,30 +84,34 @@ model User {
 }
 
 model TaskContext {
-  id         String   @id @default(cuid())
-  source     String
-  rawContent String
-  parsedData String?
-  modelUsed  String?
-  userId     String?
-  createdAt  DateTime @default(now())
-  tasks      Task[]
-  user       User?    @relation(fields: [userId], references: [id])
+  id              String   @id @default(cuid())
+  source          String
+  rawContent      String
+  parsedData      String?
+  modelUsed       String?
+  userId          String?
+  approvalConfig  String?          // JSON: ["Alice", "Eric"] — agents that require approval
+  approvalEmailId String?          // Message-ID for tracking approval email replies
+  pipelineStatus  String   @default("ACTIVE") // ACTIVE | AWAITING_APPROVAL | ALL_APPROVED | COMPLETED
+  createdAt       DateTime @default(now())
+  tasks           Task[]
+  user            User?    @relation(fields: [userId], references: [id])
 }
 
 model Task {
-  id             String      @id @default(cuid())
-  contextId      String
-  agent          String
-  instruction    String
-  status         String      @default("PENDING")
-  resultPayload  String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  copilotHistory String?
-  thinkLog       String?
-  toolCallsLog   String?
-  context        TaskContext @relation(fields: [contextId], references: [id])
+  id               String      @id @default(cuid())
+  contextId        String
+  agent            String
+  instruction      String
+  status           String      @default("PENDING")
+  requiresApproval Boolean     @default(false)
+  resultPayload    String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  copilotHistory   String?
+  thinkLog         String?
+  toolCallsLog     String?
+  context          TaskContext @relation(fields: [contextId], references: [id])
 }
 
 model GroupChat {
