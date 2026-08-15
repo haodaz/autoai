@@ -78,6 +78,18 @@ agents:
     trigger_keywords: ["财务", "预算", "ROI", "成本", "利润", "收入", "支出", "报表", "finance", "budget", "revenue", "cost", "profit", "投资回报"]
     notes: "Hugo 专注数字分析。当任务涉及财务数据时必选。其产出可被 Edda 用于生成含图表的 PPT。"
 
+  - name: "Iris"
+    title: "网页设计师 / Web Designer"
+    capabilities:
+      - 市场宣传页面生成 (Marketing Landing Page Generation)
+      - 招生画册设计 (Enrollment Brochure Design)
+      - 品牌官网建设 (Brand Website Creation)
+      - 多页面站点架构 (Multi-page Site Architecture)
+      - 图片占位与替换 (Image Placeholder & Replacement)
+    output_format: "json → multi-page HTML website"
+    trigger_keywords: ["宣传页", "着陆页", "建站", "网页", "网站", "landing page", "brochure", "webpage", "官网", "画册", "landing", "page", "web"]
+    notes: "Iris 生成完整的多页 HTML 网站。产出可发布到 /sites/slug 供外部访问。适合招生宣传、项目推广等场景。"
+
   - name: "Grace"
     title: "邮件分发专员 / Email Dispatch Specialist"
     capabilities:
