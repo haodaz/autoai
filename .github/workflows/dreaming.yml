@@ -11,19 +11,36 @@ jobs:
     name: Trigger Dreaming Agent
     runs-on: ubuntu-latest
     steps:
-      - name: 🌙 Call Dreaming API
+      - name: 🌙 Call Dreaming API (Primary Domain)
         run: |
           echo "🧠 Triggering Dreaming Agent at $(date -u '+%Y-%m-%d %H:%M UTC')..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" "${{ secrets.APP_URL }}/api/cron/dreaming")
+          
+          # Try primary domain first
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 "https://bepoffice.com/api/cron/dreaming")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | head -n -1)
           
-          echo "HTTP Status: $HTTP_CODE"
+          echo "📡 bepoffice.com → HTTP $HTTP_CODE"
           echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
           
-          if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "❌ Dreaming failed with HTTP $HTTP_CODE"
-            exit 1
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Dreaming completed successfully via bepoffice.com!"
+            exit 0
           fi
           
-          echo "✅ Dreaming completed successfully!"
+          # Fallback to Vercel domain
+          echo "⚠️ Primary failed, trying fallback..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 "https://hao-ai.vercel.app/api/cron/dreaming")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          
+          echo "📡 hao-ai.vercel.app → HTTP $HTTP_CODE"
+          echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Dreaming completed successfully via fallback!"
+            exit 0
+          fi
+          
+          echo "❌ Dreaming failed on both domains"
+          exit 1
