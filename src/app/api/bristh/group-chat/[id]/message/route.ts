@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import { loadAllAgentConfigs } from '@/lib/bristh-config';
+import { loadSoulFile, loadAgentMemories } from '@/lib/memory-engine';
 
 // Convert Next.js App Router Request to a readable stream for SSE
 export async function POST(
@@ -120,9 +121,26 @@ IMPORTANT: Do NOT prefix your response with your own name (e.g. do not write "[$
 CRITICAL: You are ONLY playing the role of ${agentConfig.name}. Do NOT generate dialogue or responses for other colleagues (e.g. do not write "[David补充]:"). Stop generating immediately after your own thought is complete!
 ${lengthInstruction}`;
 
+            let agentSystemPrompt = `${agentConfig.persona}\n\n${languagePrompt}\n\n${executionPrompt}\n\n${critiquePrompt}`;
+
+            // Inject soul file and recent memories
+            try {
+              const [soul, recentMems] = await Promise.all([
+                loadSoulFile(agentId),
+                loadAgentMemories(agentId, 8),
+              ]);
+              if (soul) {
+                agentSystemPrompt += `\n\n【你的灵魂文件 — 长期积累的经验】:\n${soul}`;
+              }
+              if (recentMems.length > 0) {
+                const memStr = recentMems.map(m => `- [${m.type}] ${m.content}`).join('\n');
+                agentSystemPrompt += `\n\n【近期记忆】:\n${memStr}`;
+              }
+            } catch {}
+
             messagesForLLM.push({ 
               role: 'system', 
-              content: `${agentConfig.persona}\n\n${languagePrompt}\n\n${executionPrompt}\n\n${critiquePrompt}` 
+              content: agentSystemPrompt 
             });
 
             // Add history (limit to last 20 messages to save context)

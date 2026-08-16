@@ -435,13 +435,24 @@ export default function LogicWhitepaper() {
 
                 {/* Injection Points */}
                 <div className="bg-white border border-gray-100 rounded-lg p-4">
-                  <div className="text-xs font-bold text-gray-700 mb-2">💉 记忆注入点</div>
-                  <div className="space-y-1.5">
+                  <div className="text-xs font-bold text-gray-700 mb-2">💉 记忆注入点（写入 + 使用）</div>
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-bold text-gray-500 mb-1">📥 写入（记忆怎么来的）</div>
                     {[
-                      { file: 'bristh-config.ts → buildAgentPrompt()', desc: 'Office 管线任务执行时注入 soul + memories', color: 'text-blue-600' },
-                      { file: 'chat/agent/route.ts', desc: '1v1 聊天时注入 soul + memories（可考教 AI）', color: 'text-purple-600' },
-                      { file: 'agents/*/route.ts', desc: '任务完成后 recordTaskCompletion() 写入记忆', color: 'text-emerald-600' },
-                      { file: 'cron/dreaming/route.ts', desc: 'Dreaming Agent 整理 → 更新 AgentSoul', color: 'text-rose-600' },
+                      { file: 'agents/*/route.ts', desc: '任务完成后 recordTaskCompletion() 写入 AgentMemory', color: 'text-emerald-600' },
+                      { file: 'cron/dreaming/route.ts', desc: 'Dreaming Agent 每日整理 → 更新 AgentSoul', color: 'text-rose-600' },
+                      { file: 'memory/write/route.ts', desc: 'Copilot 模式中用户反馈写入记忆', color: 'text-amber-600' },
+                    ].map(p => (
+                      <div key={p.file} className="flex items-start gap-2">
+                        <span className={`text-[9px] font-mono font-bold ${p.color} shrink-0`}>{p.file}</span>
+                        <span className="text-[9px] text-gray-400">{p.desc}</span>
+                      </div>
+                    ))}
+                    <div className="text-[10px] font-bold text-gray-500 mt-3 mb-1">📤 使用（记忆注入到哪里）</div>
+                    {[
+                      { file: 'bristh-config.ts → buildAgentPrompt()', desc: 'Office 管线执行任务时注入 soul + memories', color: 'text-blue-600' },
+                      { file: 'chat/agent/route.ts', desc: '1v1 聊天时注入（可考教 AI 记忆）', color: 'text-purple-600' },
+                      { file: 'group-chat/[id]/message/route.ts', desc: '群聊中每个 Agent 带记忆发言', color: 'text-indigo-600' },
                     ].map(p => (
                       <div key={p.file} className="flex items-start gap-2">
                         <span className={`text-[9px] font-mono font-bold ${p.color} shrink-0`}>{p.file}</span>
