@@ -8,25 +8,26 @@ import {
   purgeExpiredMemories,
 } from '@/lib/memory-engine';
 import { loadAgentConfig } from '@/lib/bristh-config';
-import fs from 'fs/promises';
-import path from 'path';
+import prisma from '@/lib/prisma';
 
 export const maxDuration = 300; // Up to 5 minutes for all agents
 
-// Track last dreaming time per agent
-const LAST_DREAM_FILE = path.join(process.cwd(), 'public', 'characters', '.last_dream.json');
-
+// Use database for last dream times (Vercel filesystem is read-only)
 async function getLastDreamTimes(): Promise<Record<string, string>> {
   try {
-    const raw = await fs.readFile(LAST_DREAM_FILE, 'utf-8');
-    return JSON.parse(raw);
+    const meta = await prisma.systemMeta.findUnique({ where: { key: 'last_dream_times' } });
+    return meta ? JSON.parse(meta.value) : {};
   } catch {
     return {};
   }
 }
 
 async function saveLastDreamTimes(times: Record<string, string>): Promise<void> {
-  await fs.writeFile(LAST_DREAM_FILE, JSON.stringify(times, null, 2), 'utf-8');
+  await prisma.systemMeta.upsert({
+    where: { key: 'last_dream_times' },
+    update: { value: JSON.stringify(times) },
+    create: { key: 'last_dream_times', value: JSON.stringify(times) },
+  });
 }
 
 /**
@@ -53,7 +54,6 @@ export async function GET(req: Request) {
       if (agentId === 'chief') continue;
 
       try {
-        // Load all memories, then filter to only new ones
         const allMemories = await loadAgentMemories(agentId, 100);
         const lastDream = lastDreamTimes[agentId];
 
@@ -128,7 +128,6 @@ ${existingSoul ? `${agentName} 当前的灵魂文件（长期记忆）：\n${exi
         if (dreamResult?.soul) {
           await writeSoulFile(agentId, dreamResult.soul);
           const purged = await purgeExpiredMemories(agentId);
-          // Record dream time
           lastDreamTimes[agentId] = now;
           results[agentId] = {
             status: 'success',
@@ -144,7 +143,7 @@ ${existingSoul ? `${agentName} 当前的灵魂文件（长期记忆）：\n${exi
       }
     }
 
-    // Save last dream times
+    // Save last dream times to database
     await saveLastDreamTimes(lastDreamTimes);
 
     return NextResponse.json({

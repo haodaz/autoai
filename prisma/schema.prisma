@@ -147,3 +147,9 @@ model GroupChatMessage {
   createdAt   DateTime  @default(now())
   groupChat   GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
 }
+
+model SystemMeta {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
