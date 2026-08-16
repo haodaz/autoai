@@ -1,0 +1,29 @@
+name: 🧠 AI Dreaming Agent — Daily Memory Consolidation
+
+on:
+  schedule:
+    # Run at 4:00 UTC = 0:00 AM New York time (EDT)
+    - cron: '0 4 * * *'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  dream:
+    name: Trigger Dreaming Agent
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🌙 Call Dreaming API
+        run: |
+          echo "🧠 Triggering Dreaming Agent at $(date -u '+%Y-%m-%d %H:%M UTC')..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" "${{ secrets.APP_URL }}/api/cron/dreaming")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          
+          echo "HTTP Status: $HTTP_CODE"
+          echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+          
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "❌ Dreaming failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          
+          echo "✅ Dreaming completed successfully!"
