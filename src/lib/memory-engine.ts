@@ -1,17 +1,14 @@
 /**
- * Memory Engine — AI 记忆系统核心
+ * Memory Engine — AI 记忆系统核心 (Database-backed)
  * 
- * 文件系统结构:
- *   public/characters/bristh_{agent}/
- *   ├── memory/
- *   │   ├── soul.md              (灵魂文件 — Dreaming Agent 维护)
- *   │   └── 2025-08-15.jsonl     (当日原始记忆条目)
- *   └── task_memory/
- *       └── {taskId}.md          (任务摘要)
+ * 使用 Prisma 数据库存储，兼容 Vercel 只读文件系统。
+ * 
+ * Tables:
+ *   AgentMemory  — 记忆条目（替代 JSONL）
+ *   AgentSoul    — 灵魂文件（替代 soul.md）
  */
 
-import fs from 'fs/promises';
-import path from 'path';
+import prisma from '@/lib/prisma';
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -34,80 +31,61 @@ export interface TaskMemory {
   createdAt: string;
 }
 
-// ── Paths ────────────────────────────────────────────────────────────
-
-function agentDir(agentId: string): string {
-  return path.join(process.cwd(), 'public', 'characters', `bristh_${agentId.toLowerCase()}`);
-}
-
-function memoryDir(agentId: string): string {
-  return path.join(agentDir(agentId), 'memory');
-}
-
-function taskMemoryDir(agentId: string): string {
-  return path.join(agentDir(agentId), 'task_memory');
-}
-
-function todayFile(agentId: string): string {
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  return path.join(memoryDir(agentId), `${today}.jsonl`);
-}
-
-function soulFilePath(agentId: string): string {
-  return path.join(memoryDir(agentId), 'soul.md');
-}
-
-// ── Ensure directories ──────────────────────────────────────────────
-
-async function ensureDir(dirPath: string): Promise<void> {
-  try { await fs.mkdir(dirPath, { recursive: true }); } catch {}
-}
-
 // ── Write Operations ────────────────────────────────────────────────
 
 /**
- * Write a single memory entry for an agent (appends to today's JSONL)
+ * Write a single memory entry for an agent
  */
 export async function writeMemory(agentId: string, entry: Omit<MemoryEntry, 'id' | 'ts'>): Promise<MemoryEntry> {
-  await ensureDir(memoryDir(agentId));
-  
-  const fullEntry: MemoryEntry = {
-    id: `mem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    ts: new Date().toISOString(),
-    ...entry,
-  };
+  const record = await prisma.agentMemory.create({
+    data: {
+      agentId: agentId.toLowerCase(),
+      type: entry.type,
+      source: entry.source,
+      content: entry.content,
+      importance: entry.importance,
+      taskId: entry.taskId || null,
+      archived: entry.archived || false,
+    }
+  });
 
-  const filePath = todayFile(agentId);
-  await fs.appendFile(filePath, JSON.stringify(fullEntry) + '\n', 'utf-8');
-  
-  return fullEntry;
+  return {
+    id: record.id,
+    ts: record.createdAt.toISOString(),
+    type: record.type as MemoryEntry['type'],
+    source: record.source as MemoryEntry['source'],
+    content: record.content,
+    importance: record.importance,
+    taskId: record.taskId || undefined,
+    archived: record.archived,
+  };
 }
 
 /**
- * Save a task memory summary
+ * Save a task memory summary (stored as a memory entry with type task_summary)
  */
 export async function writeTaskMemory(agentId: string, memory: TaskMemory): Promise<void> {
-  await ensureDir(taskMemoryDir(agentId));
-  
-  const content = `# 任务摘要: ${memory.instruction.slice(0, 60)}
-> Agent: ${memory.agentId} | Task: ${memory.taskId} | 时间: ${memory.createdAt}
-
-${memory.summary}
-`;
-
-  await fs.writeFile(
-    path.join(taskMemoryDir(agentId), `${memory.taskId}.md`),
-    content,
-    'utf-8'
-  );
+  await prisma.agentMemory.create({
+    data: {
+      agentId: agentId.toLowerCase(),
+      type: 'task_summary',
+      source: 'self',
+      content: `任务: ${memory.instruction.slice(0, 100)} → ${memory.summary}`,
+      importance: 0.5,
+      taskId: memory.taskId,
+    }
+  });
 }
 
 /**
  * Update the soul file (used by Dreaming Agent)
  */
 export async function writeSoulFile(agentId: string, content: string): Promise<void> {
-  await ensureDir(memoryDir(agentId));
-  await fs.writeFile(soulFilePath(agentId), content, 'utf-8');
+  await prisma.agentSoul.upsert({
+    where: { agentId: agentId.toLowerCase() },
+    update: { content },
+    create: { agentId: agentId.toLowerCase(), content },
+  });
 }
 
 // ── Read Operations ─────────────────────────────────────────────────
@@ -117,7 +95,10 @@ export async function writeSoulFile(agentId: string, content: string): Promise<v
  */
 export async function loadSoulFile(agentId: string): Promise<string> {
   try {
-    return await fs.readFile(soulFilePath(agentId), 'utf-8');
+    const soul = await prisma.agentSoul.findUnique({
+      where: { agentId: agentId.toLowerCase() }
+    });
+    return soul?.content || '';
   } catch {
     return '';
   }
@@ -127,93 +108,73 @@ export async function loadSoulFile(agentId: string): Promise<string> {
  * Load memory entries for a specific date
  */
 export async function loadMemoriesByDate(agentId: string, date: string): Promise<MemoryEntry[]> {
-  try {
-    const filePath = path.join(memoryDir(agentId), `${date}.jsonl`);
-    const raw = await fs.readFile(filePath, 'utf-8');
-    return raw.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-  } catch {
-    return [];
-  }
+  const startOfDay = new Date(`${date}T00:00:00.000Z`);
+  const endOfDay = new Date(`${date}T23:59:59.999Z`);
+
+  const records = await prisma.agentMemory.findMany({
+    where: {
+      agentId: agentId.toLowerCase(),
+      createdAt: { gte: startOfDay, lte: endOfDay },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return records.map(r => ({
+    id: r.id,
+    ts: r.createdAt.toISOString(),
+    type: r.type as MemoryEntry['type'],
+    source: r.source as MemoryEntry['source'],
+    content: r.content,
+    importance: r.importance,
+    taskId: r.taskId || undefined,
+    archived: r.archived,
+  }));
 }
 
 /**
- * Load recent memories (across multiple days), newest first
+ * Load recent memories, sorted by importance (highest first)
  */
 export async function loadAgentMemories(agentId: string, limit: number = 20): Promise<MemoryEntry[]> {
-  try {
-    const dir = memoryDir(agentId);
-    const files = await fs.readdir(dir);
-    const jsonlFiles = files
-      .filter(f => f.endsWith('.jsonl'))
-      .sort()
-      .reverse(); // newest first
+  const records = await prisma.agentMemory.findMany({
+    where: {
+      agentId: agentId.toLowerCase(),
+      archived: false,
+    },
+    orderBy: { importance: 'desc' },
+    take: limit,
+  });
 
-    const entries: MemoryEntry[] = [];
-    for (const file of jsonlFiles) {
-      if (entries.length >= limit) break;
-      try {
-        const raw = await fs.readFile(path.join(dir, file), 'utf-8');
-        const fileEntries = raw.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-        entries.push(...fileEntries);
-      } catch {}
-    }
-
-    return entries
-      .filter(e => !e.archived)
-      .sort((a, b) => b.importance - a.importance) // highest importance first
-      .slice(0, limit);
-  } catch {
-    return [];
-  }
+  return records.map(r => ({
+    id: r.id,
+    ts: r.createdAt.toISOString(),
+    type: r.type as MemoryEntry['type'],
+    source: r.source as MemoryEntry['source'],
+    content: r.content,
+    importance: r.importance,
+    taskId: r.taskId || undefined,
+    archived: r.archived,
+  }));
 }
 
 /**
- * Load all task memories for an agent
- */
-export async function loadTaskMemories(agentId: string): Promise<{ id: string; title: string; content: string; date: string }[]> {
-  try {
-    const dir = taskMemoryDir(agentId);
-    const files = await fs.readdir(dir);
-    const mdFiles = files.filter(f => f.endsWith('.md'));
-    
-    const items = await Promise.all(mdFiles.map(async f => {
-      const content = await fs.readFile(path.join(dir, f), 'utf-8');
-      const titleMatch = content.match(/^# (.+)/m);
-      const stat = await fs.stat(path.join(dir, f));
-      return {
-        id: f.replace('.md', ''),
-        title: titleMatch ? titleMatch[1] : f,
-        content,
-        date: stat.mtime.toISOString(),
-      };
-    }));
-    
-    return items.sort((a, b) => b.date.localeCompare(a.date));
-  } catch {
-    return [];
-  }
-}
-
-/**
- * List all agents that have memory directories
+ * List all agents that have memory entries or soul files
  */
 export async function listAgentsWithMemory(): Promise<string[]> {
-  try {
-    const charsDir = path.join(process.cwd(), 'public', 'characters');
-    const entries = await fs.readdir(charsDir, { withFileTypes: true });
-    const agents: string[] = [];
-    
-    for (const entry of entries) {
-      if (entry.isDirectory() && entry.name.startsWith('bristh_')) {
-        const agentId = entry.name.replace('bristh_', '');
-        agents.push(agentId);
-      }
-    }
-    
-    return agents;
-  } catch {
-    return [];
-  }
+  const [memoryAgents, soulAgents] = await Promise.all([
+    prisma.agentMemory.findMany({
+      select: { agentId: true },
+      distinct: ['agentId'],
+    }),
+    prisma.agentSoul.findMany({
+      select: { agentId: true },
+    }),
+  ]);
+
+  const all = new Set([
+    ...memoryAgents.map(a => a.agentId),
+    ...soulAgents.map(a => a.agentId),
+  ]);
+  return [...all];
 }
 
 /**
@@ -225,33 +186,22 @@ export async function getAgentMemoryStats(agentId: string): Promise<{
   totalCount: number;
   lastMemoryDate: string | null;
 }> {
-  const soul = await loadSoulFile(agentId);
-  const today = new Date().toISOString().split('T')[0];
-  const todayMems = await loadMemoriesByDate(agentId, today);
-  
-  let totalCount = 0;
-  let lastMemoryDate: string | null = null;
-  
-  try {
-    const dir = memoryDir(agentId);
-    const files = await fs.readdir(dir);
-    const jsonlFiles = files.filter(f => f.endsWith('.jsonl')).sort().reverse();
-    
-    if (jsonlFiles.length > 0) {
-      lastMemoryDate = jsonlFiles[0].replace('.jsonl', '');
-    }
-    
-    for (const file of jsonlFiles) {
-      const raw = await fs.readFile(path.join(dir, file), 'utf-8');
-      totalCount += raw.trim().split('\n').filter(Boolean).length;
-    }
-  } catch {}
-  
+  const aid = agentId.toLowerCase();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [soul, todayCount, totalCount, lastMemory] = await Promise.all([
+    prisma.agentSoul.findUnique({ where: { agentId: aid } }),
+    prisma.agentMemory.count({ where: { agentId: aid, createdAt: { gte: today } } }),
+    prisma.agentMemory.count({ where: { agentId: aid } }),
+    prisma.agentMemory.findFirst({ where: { agentId: aid }, orderBy: { createdAt: 'desc' } }),
+  ]);
+
   return {
-    hasSoul: soul.length > 0,
-    todayCount: todayMems.length,
+    hasSoul: !!soul?.content,
+    todayCount,
     totalCount,
-    lastMemoryDate,
+    lastMemoryDate: lastMemory?.createdAt.toISOString().split('T')[0] || null,
   };
 }
 
@@ -260,24 +210,8 @@ export async function getAgentMemoryStats(agentId: string): Promise<{
  */
 export async function deleteMemory(agentId: string, memoryId: string): Promise<boolean> {
   try {
-    const dir = memoryDir(agentId);
-    const files = await fs.readdir(dir);
-    const jsonlFiles = files.filter(f => f.endsWith('.jsonl'));
-    
-    for (const file of jsonlFiles) {
-      const filePath = path.join(dir, file);
-      const raw = await fs.readFile(filePath, 'utf-8');
-      const lines = raw.trim().split('\n').filter(Boolean);
-      const filtered = lines.filter(line => {
-        try { const entry = JSON.parse(line); return entry.id !== memoryId; } catch { return true; }
-      });
-      
-      if (filtered.length < lines.length) {
-        await fs.writeFile(filePath, filtered.join('\n') + (filtered.length ? '\n' : ''), 'utf-8');
-        return true;
-      }
-    }
-    return false;
+    await prisma.agentMemory.delete({ where: { id: memoryId } });
+    return true;
   } catch {
     return false;
   }
@@ -288,61 +222,35 @@ export async function deleteMemory(agentId: string, memoryId: string): Promise<b
  * - High importance (>0.7): permanent
  * - Medium importance (0.4-0.7): 30 days
  * - Low importance (<0.4): 7 days
- * 
- * Returns count of purged entries.
  */
 export async function purgeExpiredMemories(agentId: string): Promise<number> {
-  const RETENTION_HIGH = Infinity;    // >0.7: permanent
-  const RETENTION_MED = 30;           // 0.4-0.7: 30 days
-  const RETENTION_LOW = 7;            // <0.4: 7 days
+  const aid = agentId.toLowerCase();
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  let purgeCount = 0;
-  const now = Date.now();
+  // Delete archived
+  const archived = await prisma.agentMemory.deleteMany({
+    where: { agentId: aid, archived: true }
+  });
 
-  try {
-    const dir = memoryDir(agentId);
-    const files = await fs.readdir(dir);
-    const jsonlFiles = files.filter(f => f.endsWith('.jsonl'));
-
-    for (const file of jsonlFiles) {
-      const filePath = path.join(dir, file);
-      const raw = await fs.readFile(filePath, 'utf-8');
-      const lines = raw.trim().split('\n').filter(Boolean);
-      
-      const kept = lines.filter(line => {
-        try {
-          const entry: MemoryEntry = JSON.parse(line);
-          const ageMs = now - new Date(entry.ts).getTime();
-          const ageDays = ageMs / (1000 * 60 * 60 * 24);
-
-          // Already archived → purge
-          if (entry.archived) { purgeCount++; return false; }
-
-          // Determine retention based on importance
-          const maxDays = entry.importance > 0.7
-            ? RETENTION_HIGH
-            : entry.importance >= 0.4
-              ? RETENTION_MED
-              : RETENTION_LOW;
-
-          if (ageDays > maxDays) {
-            purgeCount++;
-            return false;
-          }
-          return true;
-        } catch { return true; }
-      });
-
-      if (kept.length < lines.length) {
-        if (kept.length === 0) {
-          await fs.unlink(filePath); // Remove empty files
-        } else {
-          await fs.writeFile(filePath, kept.join('\n') + '\n', 'utf-8');
-        }
-      }
+  // Delete low importance older than 7 days
+  const low = await prisma.agentMemory.deleteMany({
+    where: {
+      agentId: aid,
+      importance: { lt: 0.4 },
+      createdAt: { lt: sevenDaysAgo },
     }
-  } catch {}
+  });
 
-  return purgeCount;
+  // Delete medium importance older than 30 days
+  const med = await prisma.agentMemory.deleteMany({
+    where: {
+      agentId: aid,
+      importance: { gte: 0.4, lte: 0.7 },
+      createdAt: { lt: thirtyDaysAgo },
+    }
+  });
+
+  return archived.count + low.count + med.count;
 }
-

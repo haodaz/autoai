@@ -153,3 +153,24 @@ model SystemMeta {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model AgentMemory {
+  id         String   @id @default(cuid())
+  agentId    String
+  type       String   // task_feedback, lesson_learned, user_preference, task_summary, copilot_feedback, dreaming_insight
+  source     String   // user, self, system, dreaming
+  content    String
+  importance Float    @default(0.5)
+  taskId     String?
+  archived   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([agentId, createdAt])
+  @@index([agentId, importance])
+}
+
+model AgentSoul {
+  agentId   String   @id
+  content   String
+  updatedAt DateTime @updatedAt
+}
