@@ -75,11 +75,41 @@ function TaskMemoryTab() {
   const [selectedCtx, setSelectedCtx] = useState<any>(null);
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchContexts = () => {
+    setLoading(true);
     fetch('/api/bristh/kb').then(r => r.json()).then(data => {
       setContexts(Array.isArray(data) ? data : []);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchContexts(); }, []);
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    Modal.confirm({
+      title: '确认删除',
+      content: '删除后该任务的所有子任务结果也会被清除，不可恢复。',
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await fetch('/api/bristh/kb', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          });
+          message.success('已删除');
+          if (selectedCtx?.id === id) {
+            setSelectedCtx(null);
+          }
+          fetchContexts();
+        } catch {
+          message.error('删除失败');
+        }
+      }
+    });
+  };
 
   if (loading) return (<div className="flex items-center justify-center h-64"><Spin size="large" /></div>);
 
@@ -115,6 +145,10 @@ function TaskMemoryTab() {
             <h3 className="font-bold text-gray-900 truncate">{selectedCtx.title || '任务详情'}</h3>
             <p className="text-[10px] text-gray-400">{new Date(selectedCtx.createdAt).toLocaleString('zh-CN')} · {selectedCtx.tasks?.length || 0} 个子任务</p>
           </div>
+          <button onClick={(e) => handleDelete(selectedCtx.id, e)}
+            className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center hover:bg-red-100 text-red-400 hover:text-red-600 transition-all">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* Raw content */}
@@ -253,6 +287,10 @@ function TaskMemoryTab() {
                   <div className="flex items-center gap-2 ml-3 shrink-0">
                     <span className="text-[10px] text-gray-300 bg-gray-50 px-2 py-1 rounded-lg">{ctx._count?.tasks || 0} 个子任务</span>
                     <span className="text-[10px] text-gray-300">{new Date(ctx.createdAt).toLocaleDateString('zh-CN')}</span>
+                    <button onClick={(e) => handleDelete(ctx.id, e)}
+                      className="w-6 h-6 rounded-md bg-transparent flex items-center justify-center hover:bg-red-50 text-gray-200 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                     <ChevronRight className="w-4 h-4 text-gray-200 group-hover:text-indigo-400 transition-colors" />
                   </div>
                 </div>
@@ -556,13 +594,13 @@ export default function AIKbPage() {
 
       {/* Tabs */}
       <div className="px-8 pt-3 pb-1 shrink-0">
-        <div className="flex gap-1 bg-white rounded-xl p-1 border border-gray-100 w-fit shadow-sm">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 border border-gray-200/60 w-fit">
           {TAB_CONFIG.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
                 activeTab === tab.key
-                  ? 'bg-gray-900 text-white shadow-md'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200/80'
+                  : 'text-gray-400 hover:text-gray-600'
               }`}>
               {tab.icon} {tab.label}
             </button>
