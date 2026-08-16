@@ -398,6 +398,59 @@ export default function LogicWhitepaper() {
                 <div className="text-gray-500">## 协作模式</div>
                 <div>- 产出通常传给 Edda(PPT) + Grace(邮件)</div>
               </div>
+
+              <h3 className="text-sm font-bold text-gray-800 mb-3 mt-6">技术实现细节</h3>
+              <div className="space-y-3">
+                {/* Database Schema */}
+                <div className="bg-white border border-gray-100 rounded-lg p-4">
+                  <div className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-2">
+                    <Database className="w-3.5 h-3.5 text-indigo-500" /> 数据库存储（Prisma + Supabase PostgreSQL）
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { table: 'AgentMemory', fields: 'agentId, type, source, content, importance, taskId, archived', desc: '记忆条目' },
+                      { table: 'AgentSoul', fields: 'agentId, content, updatedAt', desc: '灵魂文件' },
+                      { table: 'SystemMeta', fields: 'key, value, updatedAt', desc: '系统状态（last_dream_times）' },
+                    ].map(t => (
+                      <div key={t.table} className="bg-gray-50 rounded-lg p-2.5">
+                        <div className="text-[10px] font-bold text-indigo-600">{t.table}</div>
+                        <div className="text-[9px] text-gray-400 mt-0.5">{t.desc}</div>
+                        <div className="text-[8px] text-gray-300 mt-1 font-mono">{t.fields}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cron */}
+                <div className="bg-white border border-gray-100 rounded-lg p-4">
+                  <div className="text-xs font-bold text-gray-700 mb-2">⏰ 定时任务 — GitHub Actions Cron</div>
+                  <div className="bg-gray-900 rounded-lg p-3 text-[10px] font-mono">
+                    <div className="text-gray-500"># .github/workflows/dreaming.yml</div>
+                    <div className="text-green-400">schedule: &quot;0 4 * * *&quot;</div>
+                    <div className="text-gray-500"># = 纽约时间 0:00 AM (UTC-4)</div>
+                    <div className="text-cyan-400 mt-1">curl bepoffice.com/api/cron/dreaming</div>
+                    <div className="text-gray-500"># fallback: hao-ai.vercel.app</div>
+                  </div>
+                </div>
+
+                {/* Injection Points */}
+                <div className="bg-white border border-gray-100 rounded-lg p-4">
+                  <div className="text-xs font-bold text-gray-700 mb-2">💉 记忆注入点</div>
+                  <div className="space-y-1.5">
+                    {[
+                      { file: 'bristh-config.ts → buildAgentPrompt()', desc: 'Office 管线任务执行时注入 soul + memories', color: 'text-blue-600' },
+                      { file: 'chat/agent/route.ts', desc: '1v1 聊天时注入 soul + memories（可考教 AI）', color: 'text-purple-600' },
+                      { file: 'agents/*/route.ts', desc: '任务完成后 recordTaskCompletion() 写入记忆', color: 'text-emerald-600' },
+                      { file: 'cron/dreaming/route.ts', desc: 'Dreaming Agent 整理 → 更新 AgentSoul', color: 'text-rose-600' },
+                    ].map(p => (
+                      <div key={p.file} className="flex items-start gap-2">
+                        <span className={`text-[9px] font-mono font-bold ${p.color} shrink-0`}>{p.file}</span>
+                        <span className="text-[9px] text-gray-400">{p.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 

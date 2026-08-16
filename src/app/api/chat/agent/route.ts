@@ -1,6 +1,7 @@
 import { loadAgentConfig, loadAgentContext } from '@/lib/bristh-config';
 import { getActiveModelConfig } from '@/lib/model-registry';
 import { getAgentTools, executeAgentTool, ToolDefinition } from '@/lib/agent-tools';
+import { loadSoulFile, loadAgentMemories } from '@/lib/memory-engine';
 
 // ============================================
 // /api/chat/agent — 1v1 Agent Chat (SSE stream)
@@ -49,6 +50,23 @@ export async function POST(req: Request) {
 
     if (privateContext) {
       systemPrompt += `\n\nAgent-specific reference knowledge:\n${privateContext}`;
+    }
+
+    // 2b. Inject soul file and recent memories
+    try {
+      const [soul, recentMemories] = await Promise.all([
+        loadSoulFile(agentId),
+        loadAgentMemories(agentId, 10),
+      ]);
+      if (soul) {
+        systemPrompt += `\n\n【你的灵魂文件 — 长期积累的经验和认知】:\n${soul}`;
+      }
+      if (recentMemories.length > 0) {
+        const memStr = recentMemories.map(m => `- [${m.type}] ${m.content}`).join('\n');
+        systemPrompt += `\n\n【近期记忆 — 运用这些经验】:\n${memStr}`;
+      }
+    } catch (e) {
+      console.warn('Failed to load memories for chat:', e);
     }
 
     // 3. Get tools for this agent
