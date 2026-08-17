@@ -93,8 +93,16 @@ export class TalentAuditService {
     
     let childrenConditions: any[] = [];
 
-    // 如果 query 包含逗号，说明是多人列表查询
-    const names = cleanQuery.split(/[,，、]/).map(n => n.trim()).filter(Boolean);
+    // 区分"多人列表逗号"和"姓,名格式逗号"：
+    // 姓,名格式：split 后恰好 2 段、都短（≤15 char）、纯英文字母（无中文）
+    // 多人列表：否则
+    const rawSplit = cleanQuery.split(/[,，、]/).map(n => n.trim()).filter(Boolean);
+    const looksLikeFamilyGivenFormat = (
+      rawSplit.length === 2
+      && rawSplit.every(p => p.length <= 15 && /^[a-zA-Z\s\-]+$/.test(p))
+    );
+
+    const names = looksLikeFamilyGivenFormat ? [cleanQuery] : rawSplit;
 
     if (names.length > 1) {
       for (const n of names) {
@@ -443,24 +451,67 @@ export class TalentAuditService {
   }
 
   /**
-   * Search Paper Database (VSDPaper)
+   * Search Paper Database (VSDPaper) — 支持多级 fallback
+   * 原因: 平方库 ES 分词器对"中英/数字混排开头"的 ilike 失效
+   *       (如 "X箍缩背光照相" 搜不到, 但 "箍缩背光照相" 能命中)
+   * Fallback 链: 原标题 → 去英文/数字前缀 → 提取最长连续中文片段 → 关键词拆分
    */
   async searchPapers(query: string, limit: number = 10, userToken?: string): Promise<VSDPaper[]> {
     const client = mcpToolsDataPlatform;
     const token = userToken || process.env.VISIONSQUARE_AUTH_BEARER;
 
-    const res = await client.dashGenericSearch({
-      model: 'VSDPaper',
-      condition: JSON.stringify({
-        logic_operator: '&',
-        children: [
-          { leaf: { field: 'name', comparator: 'ilike', value: `%${query.trim()}%` } }
-        ]
-      }),
-      fields: ['id', 'name', 'authors', 'impact_factor_publish_year', 'indexed_by', 'journal_included', 'journal_source', 'journal_id'],
-      limit,
-    }, token);
-    return (res.items || []) as unknown as VSDPaper[];
+    const trimmed = (query || '').trim();
+    if (!trimmed) return [];
+
+    // 构建候选 search terms（按优先级排序）
+    const candidates: string[] = [];
+    const seen = new Set<string>();
+    const pushTerm = (t: string) => {
+      const s = t.trim();
+      if (s.length >= 2 && !seen.has(s)) { seen.add(s); candidates.push(s); }
+    };
+
+    // L0: 原始标题
+    pushTerm(trimmed);
+
+    // L1: 去掉开头的英文/数字/符号前缀（解决 "X箍缩..." / "2D-Gaussian..." 问题）
+    const stripped = trimmed.replace(/^[A-Za-z0-9\-_·\s]+/, '').trim();
+    if (stripped && stripped !== trimmed) pushTerm(stripped);
+
+    // L2: 提取最长的连续中文片段
+    const cnMatches = trimmed.match(/[\u4e00-\u9fff]{2,}/g);
+    if (cnMatches) {
+      cnMatches.sort((a, b) => b.length - a.length);
+      for (const seg of cnMatches) pushTerm(seg);
+    }
+
+    // L3: 如果有多个中文片段，组合前两个（如 "箍缩" + "背光照相" → 分别搜后取并集）
+    // 这一步在调用方已经循环 10 条候选了，这里只做 L0~L2 足够
+
+    // 逐个尝试，取最先命中的结果
+    let lastRes: any = null;
+    for (const term of candidates) {
+      const res = await client.dashGenericSearch({
+        model: 'VSDPaper',
+        condition: JSON.stringify({
+          logic_operator: '&',
+          children: [
+            { leaf: { field: 'name', comparator: 'ilike', value: `%${term}%` } }
+          ]
+        }),
+        fields: ['id', 'name', 'authors', 'impact_factor_publish_year', 'indexed_by', 'journal_included', 'journal_source', 'journal_id'],
+        limit,
+      }, token);
+      if (res.items && res.items.length > 0) {
+        if (term !== candidates[0]) {
+          console.log(`[TALENT-SERVICE] searchPapers fallback hit: "${trimmed}" → "${term}" (${res.items.length} results)`);
+        }
+        return res.items as unknown as VSDPaper[];
+      }
+      lastRes = res;
+    }
+
+    return (lastRes?.items || []) as unknown as VSDPaper[];
   }
 
   /**
@@ -504,6 +555,117 @@ export class TalentAuditService {
       limit,
     }, token);
     return res.items || [];
+  }
+
+
+  /**
+   * 按给定的核心关键词及"机构"、"荣誉"等多条件精确执行一次模糊搜索。
+   * 不包含内部降级兜底逻辑，交由上层 Agent 编排。
+   *
+   * ⚠️ 平方库数据特征（影响搜索策略）：
+   *   - name 字段：大量为空，很多人只有 name_en
+   *   - research_field：中英文混存，部分存的是长文介绍而非关键词
+   *   - school_current / workplace_current：存的是机构 slug（如 "tsinghua-university"），不是中文名
+   *   - introduction / notes：有些关键信息存在这里
+   *   - API 对条件叶子数有隐式上限，超过约 30 个 OR 叶子时可能返回空结果
+   *
+   * @param keywords 核心研究方向/主题的关键词数组
+   * @param institution 限定机构（如"清华大学"）
+   * @param honors 限定荣誉标签（如"院士"）
+   * @param limit 返回数量上限
+   * @param userToken 用户 token
+   */
+  async searchTalentsByConditions(
+    keywords: string[],
+    institution: string = '', 
+    honors: string = '', 
+    limit: number = 10, 
+    userToken?: string
+  ): Promise<CRMTalentPerson[]> {
+    const instKws = institution.split(/[,，\s]+/).filter(k => k.trim());
+    const honorKws = honors.split(/[,，\s]+/).filter(k => k.trim());
+    const hasTopic = keywords && keywords.length > 0;
+    const hasInst = instKws.length > 0;
+    const hasHonor = honorKws.length > 0;
+
+    if (!hasTopic && !hasInst && !hasHonor) return [];
+
+    const client = mcpToolsDataPlatform;
+    const token = userToken || process.env.VISIONSQUARE_AUTH_BEARER;
+
+    // ── 1. Topic 条件（仅当有关键词时添加）──
+    // 核心策略：只搜文本内容字段（research_field / introduction / notes / talent_type / name / name_en）
+    // ⚠️ 限制 keywords 最多取前 4 个，避免叶子数爆炸（6字段 × 4词 = 24叶子，安全范围内）
+    const rootChildren: any[] = [];
+
+    if (hasTopic) {
+      const effectiveKeywords = keywords.slice(0, 4);
+      const topicLeaves: any[] = [];
+      for (const kw of effectiveKeywords) {
+        topicLeaves.push({ leaf: { field: 'research_field', comparator: 'ilike', value: `%${kw}%` } });
+        topicLeaves.push({ leaf: { field: 'introduction', comparator: 'ilike', value: `%${kw}%` } });
+        topicLeaves.push({ leaf: { field: 'notes', comparator: 'ilike', value: `%${kw}%` } });
+        topicLeaves.push({ leaf: { field: 'talent_type', comparator: 'ilike', value: `%${kw}%` } });
+        topicLeaves.push({ leaf: { field: 'name', comparator: 'ilike', value: `%${kw}%` } });
+        topicLeaves.push({ leaf: { field: 'name_en', comparator: 'ilike', value: `%${kw}%` } });
+      }
+      console.log(`[TalentSearch] Topic 条件叶子数: ${topicLeaves.length}, keywords(截断后): [${effectiveKeywords.join(', ')}]`);
+      rootChildren.push({ logic_operator: '|', children: topicLeaves });
+    }
+
+    // ── 2. 机构限定条件 ──
+    // 字段存储格式探测结论：
+    //   - workplace_current: 存机构中文名文本（如 "清华大学、...大学"）
+    //   - school_current: 存机构 slug 数组（如 ["cn.tsinghua", ""]）
+    // ⚠️ 关键：VisionSquare 数据平台在同一 OR 组混合"数组字段"和"普通文本字段"时会返回空集！
+    //   所以这里只匹配文本字段（workplace_current / introduction / notes），绝对不能碰 school_current
+    if (institution.trim()) {
+      const instLeaves: any[] = [];
+      for (const kw of instKws) {
+        instLeaves.push({ leaf: { field: 'workplace_current', comparator: 'ilike', value: `%${kw}%` } });
+        instLeaves.push({ leaf: { field: 'introduction', comparator: 'ilike', value: `%${kw}%` } });
+        instLeaves.push({ leaf: { field: 'notes', comparator: 'ilike', value: `%${kw}%` } });
+      }
+      if (instLeaves.length > 0) {
+        rootChildren.push({ logic_operator: '|', children: instLeaves });
+      }
+    }
+
+    // ── 3. 荣誉/标签限定条件 ──
+    if (honors.trim()) {
+      const honorLeaves: any[] = [];
+      for (const kw of honorKws) {
+        honorLeaves.push({ leaf: { field: 'talent_type', comparator: 'ilike', value: `%${kw}%` } });
+        honorLeaves.push({ leaf: { field: 'talent_source_category', comparator: 'ilike', value: `%${kw}%` } });
+        honorLeaves.push({ leaf: { field: 'introduction', comparator: 'ilike', value: `%${kw}%` } });
+      }
+      if (honorLeaves.length > 0) {
+        rootChildren.push({ logic_operator: '|', children: honorLeaves });
+      }
+    }
+
+    const conditionJson = JSON.stringify({
+      logic_operator: '&',
+      children: rootChildren,
+    });
+    const totalLeaves = rootChildren.reduce((acc, g) => acc + (g.children?.length || 0), 0);
+    console.log(`[TalentSearch] 最终 condition 叶子总数: ${totalLeaves}, JSON长度: ${conditionJson.length}`);
+
+    const res = await client.dashGenericSearch({
+      model: 'CRMTalentPerson',
+      condition: conditionJson,
+      fields: [
+        'id', 'name', 'name_en', 'research_field', 'workplace_current', 'school_current',
+        'position_current', 'admin_position', 'email', 'profile_link', 'photo_id.download_url',
+        'talent_type', 'talent_source_category', 'country_current', 'introduction',
+      ],
+      limit: Math.min(limit, 30),
+    }, token);
+
+    const items = (res.items || []) as Record<string, unknown>[];
+    const finalKeywords = hasTopic ? keywords.slice(0, 4) : [];
+    console.log(`[TalentSearch] 搜索结果: ${items.length} 条 (keywords=[${finalKeywords.join(',')}] institution="${institution}" honors="${honors}")`);
+    return items.map((t) => ({ ...t } as unknown) as CRMTalentPerson);
   }
 }
 

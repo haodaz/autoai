@@ -1,7 +1,6 @@
 let _orcidTokenCache: { token: string; expiresAt: number } | null = null;
 
 export async function getOrcidToken(): Promise<string | null> {
-  // 检查缓存（Token 有效期 ~20 年，基本永不过期）
   if (_orcidTokenCache && Date.now() < _orcidTokenCache.expiresAt) {
     return _orcidTokenCache.token;
   }
@@ -28,10 +27,7 @@ export async function getOrcidToken(): Promise<string | null> {
   }
 }
 
-/**
- * ORCID 三步降级搜索：精准 → 去机构 → 全文
- * 每步正序 + 反序都搜一遍，取合集去重
- */
+/** 三级降级搜索: 精准(正+反+机构) → 去机构(正+反) → 全文 text */
 export async function orcidSearch(
   token: string,
   givenNames: string,
@@ -55,7 +51,6 @@ export async function orcidSearch(
     return arr.filter(r => { if (seen.has(r.path)) return false; seen.add(r.path); return true; });
   };
 
-  // Step 1: 精准搜（正序 + 反序 + 机构）
   if (institution) {
     const q1 = `given-names:${givenNames} AND family-name:${familyName} AND affiliation-org-name:${institution}`;
     const q2 = `given-names:${familyName} AND family-name:${givenNames} AND affiliation-org-name:${institution}`;
@@ -64,14 +59,12 @@ export async function orcidSearch(
     if (results.length > 0) return results;
   }
 
-  // Step 2: 去掉机构（正序 + 反序）
   const q3 = `given-names:${givenNames} AND family-name:${familyName}`;
   const q4 = `given-names:${familyName} AND family-name:${givenNames}`;
   const [r3, r4] = await Promise.all([doSearch(q3), doSearch(q4)]);
   const step2 = dedupe([...r3, ...r4]);
   if (step2.length > 0 && step2.length <= 20) return step2.slice(0, 5);
 
-  // Step 3: 全文搜索（杀手锏）
   const fullName = `${givenNames} ${familyName}`;
   const q5 = institution
     ? `text:"${fullName}" AND text:${institution}`
@@ -79,14 +72,49 @@ export async function orcidSearch(
   const r5 = await doSearch(q5);
   if (r5.length > 0) return r5;
 
-  // Step 2 结果太多但 Step 3 没结果，返回 Step 2 前 5 个
   return step2.slice(0, 5);
 }
 
-/**
- * 从 ORCID 拉取学者的 employments，用于消歧
- */
-export async function orcidGetEmployments(token: string, orcidId: string): Promise<Array<{ org: string; role: string; dept: string }>> {
+/** 解析 ORCID 的日期对象 → YYYY-MM-DD 或 YYYY */
+function parseOrcidDate(d: any): string {
+  if (!d || typeof d !== 'object') return '';
+  const year = d.year?.value || '';
+  const month = d.month?.value || '';
+  const day = d.day?.value || '';
+  if (year && month && day) return `${year}-${month}-${day}`;
+  if (year && month) return `${year}-${month}`;
+  if (year) return year;
+  return '';
+}
+
+/** 从 ORCID 的 external-ids 数组里提取 DOI */
+function extractDoi(summary: any): string {
+  const extIds = summary?.['external-ids']?.['external-id'] || [];
+  for (const eid of extIds) {
+    if (eid?.['external-id-type'] === 'doi') {
+      return eid?.['external-id-value'] || '';
+    }
+  }
+  return '';
+}
+
+export interface OrcidAffiliation {
+  org: string;
+  role: string;
+  dept: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface OrcidWork {
+  title: string;
+  type: string;
+  journal: string;
+  year: string;
+  doi: string;
+}
+
+export async function orcidGetEmployments(token: string, orcidId: string): Promise<OrcidAffiliation[]> {
   try {
     const res = await fetch(`https://pub.orcid.org/v3.0/${orcidId}/employments`, {
       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
@@ -99,15 +127,14 @@ export async function orcidGetEmployments(token: string, orcidId: string): Promi
         org: s.organization?.name || '',
         role: s['role-title'] || '',
         dept: s['department-name'] || '',
+        startDate: parseOrcidDate(s['start-date']),
+        endDate: parseOrcidDate(s['end-date']),
       };
     });
   } catch { return []; }
 }
 
-/**
- * 从 ORCID 拉取教育经历
- */
-export async function orcidGetEducations(token: string, orcidId: string): Promise<Array<{ org: string; role: string; dept: string }>> {
+export async function orcidGetEducations(token: string, orcidId: string): Promise<OrcidAffiliation[]> {
   try {
     const res = await fetch(`https://pub.orcid.org/v3.0/${orcidId}/educations`, {
       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
@@ -120,15 +147,34 @@ export async function orcidGetEducations(token: string, orcidId: string): Promis
         org: s.organization?.name || '',
         role: s['role-title'] || '',
         dept: s['department-name'] || '',
+        startDate: parseOrcidDate(s['start-date']),
+        endDate: parseOrcidDate(s['end-date']),
       };
     });
   } catch { return []; }
 }
 
-/**
- * 从 ORCID 拉取论文（前 N 篇）
- */
-export async function orcidGetWorks(token: string, orcidId: string, limit = 10): Promise<Array<{ title: string; type: string }>> {
+export interface OrcidProfileName {
+  given: string;
+  family: string;
+  full: string;
+}
+
+export async function orcidGetProfileName(token: string, orcidId: string): Promise<OrcidProfileName> {
+  try {
+    const res = await fetch(`https://pub.orcid.org/v3.0/${orcidId}`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+    });
+    if (!res.ok) return { given: '', family: '', full: '' };
+    const data = await res.json();
+    const name = data?.person?.name || {};
+    const given = name['given-names']?.value || '';
+    const family = name['family-name']?.value || '';
+    return { given, family, full: `${given} ${family}`.trim() };
+  } catch { return { given: '', family: '', full: '' }; }
+}
+
+export async function orcidGetWorks(token: string, orcidId: string, limit = 10): Promise<OrcidWork[]> {
   try {
     const res = await fetch(`https://pub.orcid.org/v3.0/${orcidId}/works`, {
       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
@@ -137,9 +183,14 @@ export async function orcidGetWorks(token: string, orcidId: string, limit = 10):
     const data = await res.json();
     return (data.group || []).slice(0, limit).map((g: any) => {
       const s = g['work-summary']?.[0] || {};
+      const pubDate = s['publication-date'] || {};
+      const year = pubDate.year?.value || '';
       return {
         title: s.title?.title?.value || 'N/A',
         type: s.type || '',
+        journal: s['journal-title']?.value || '',
+        year,
+        doi: extractDoi(s),
       };
     });
   } catch { return []; }
