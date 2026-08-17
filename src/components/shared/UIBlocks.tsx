@@ -13,6 +13,7 @@ export const COLOR_BORDER_MAP: Record<string, { color: string; shadow: string }>
   indigo: { color: 'border-indigo-500', shadow: 'shadow-indigo-500/20' },
   teal: { color: 'border-teal-500', shadow: 'shadow-teal-500/20' },
   rose: { color: 'border-rose-500', shadow: 'shadow-rose-500/20' },
+  green: { color: 'border-green-500', shadow: 'shadow-green-500/20' },
 };
 
 export function renderPreviewStandalone(payload: string | null) {

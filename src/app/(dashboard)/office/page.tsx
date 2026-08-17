@@ -27,7 +27,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
   const logEndRef = useRef<HTMLDivElement>(null);
   
   // Dynamic agent config from API
-  const [subAIs, setSubAIs] = useState<{id: string, name: string, desc: string, image: string, color: string, shadow: string}[]>([]);
+  const [subAIs, setSubAIs] = useState<{id: string, name: string, desc: string, image: string, color: string, shadow: string, category: string}[]>([]);
   
   useEffect(() => {
     fetch('/api/bristh/agents/config')
@@ -45,6 +45,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
               image: a.avatar || '/pixel_worker.png',
               color: cm.color,
               shadow: cm.shadow,
+              category: a.category || 'general',
             };
           });
         setSubAIs(mapped);
@@ -1003,38 +1004,72 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
 
       {/* 右侧闲置区 (Idle Agents) */}
       <div className="hidden md:flex w-[380px] bg-white/80 backdrop-blur-xl border-l border-gray-200/80 flex-col p-6 z-20 shadow-sm shrink-0">
-        <h2 className="text-base font-black text-gray-600 text-center mb-6">闲置 AI</h2>
+        <h2 className="text-base font-black text-gray-600 text-center mb-4">闲置 AI</h2>
         
         <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
-          <div className="flex flex-wrap justify-center gap-4">
-            {idleAIs.map((ai) => (
-              <div key={ai.id} className="w-[140px] flex flex-col items-center opacity-60 hover:opacity-100 transition-opacity cursor-default filter grayscale hover:grayscale-0 relative">
-                
-                {/* Info Icon for Idle AIs */}
-                <div className="absolute top-1 right-1 z-30">
-                  <Tooltip title={ai.desc} placement="top">
-                    <div className="p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors bg-white/80">
-                      <Info className="w-4 h-4 text-gray-500 hover:text-blue-600" />
-                    </div>
-                  </Tooltip>
-                </div>
-
-                <div className="w-full bg-white rounded-xl border-2 border-gray-200 overflow-hidden flex flex-col shadow-sm">
-                  <div className="h-[120px] bg-white flex items-center justify-center p-2 relative">
-                    <img 
-                      src={ai.image} 
-                      alt={ai.name} 
-                      className="max-h-[90%] max-w-[90%] object-contain filter drop-shadow-sm scale-125 pt-2" 
-                      style={{ imageRendering: 'pixelated' }} 
-                    />
-                  </div>
-                  <div className="pb-3 text-center bg-white border-t border-gray-50 pt-2 px-1">
-                    <h4 className="font-extrabold text-[12px] text-gray-500 leading-tight">{ai.name.split(',')[0]}</h4>
-                  </div>
-                </div>
+          {/* 通用能力 AI */}
+          {idleAIs.filter(ai => ai.category !== 'pingfang').length > 0 && (
+            <>
+              <div className="flex items-center gap-2 mb-3 px-2">
+                <div className="h-px flex-1 bg-gray-200"></div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">通用能力</span>
+                <div className="h-px flex-1 bg-gray-200"></div>
               </div>
-            ))}
-          </div>
+              <div className="flex flex-wrap justify-center gap-4 mb-5">
+                {idleAIs.filter(ai => ai.category !== 'pingfang').map((ai) => (
+                  <div key={ai.id} className="w-[140px] flex flex-col items-center opacity-60 hover:opacity-100 transition-opacity cursor-default filter grayscale hover:grayscale-0 relative">
+                    <div className="absolute top-1 right-1 z-30">
+                      <Tooltip title={ai.desc} placement="top">
+                        <div className="p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors bg-white/80">
+                          <Info className="w-4 h-4 text-gray-500 hover:text-blue-600" />
+                        </div>
+                      </Tooltip>
+                    </div>
+                    <div className="w-full bg-white rounded-xl border-2 border-gray-200 overflow-hidden flex flex-col shadow-sm">
+                      <div className="h-[120px] bg-white flex items-center justify-center p-2 relative">
+                        <img src={ai.image} alt={ai.name} className="max-h-[90%] max-w-[90%] object-contain filter drop-shadow-sm scale-125 pt-2" style={{ imageRendering: 'pixelated' }} />
+                      </div>
+                      <div className="pb-3 text-center bg-white border-t border-gray-50 pt-2 px-1">
+                        <h4 className="font-extrabold text-[12px] text-gray-500 leading-tight">{ai.name.split(',')[0]}</h4>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* 平方专业能力 AI */}
+          {idleAIs.filter(ai => ai.category === 'pingfang').length > 0 && (
+            <>
+              <div className="flex items-center gap-2 mb-3 px-2">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent"></div>
+                <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider whitespace-nowrap">⚡ 平方专业能力</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent"></div>
+              </div>
+              <div className="flex flex-wrap justify-center gap-4">
+                {idleAIs.filter(ai => ai.category === 'pingfang').map((ai) => (
+                  <div key={ai.id} className="w-[140px] flex flex-col items-center opacity-60 hover:opacity-100 transition-opacity cursor-default filter grayscale hover:grayscale-0 relative">
+                    <div className="absolute top-1 right-1 z-30">
+                      <Tooltip title={ai.desc} placement="top">
+                        <div className="p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors bg-white/80">
+                          <Info className="w-4 h-4 text-gray-500 hover:text-blue-600" />
+                        </div>
+                      </Tooltip>
+                    </div>
+                    <div className="w-full bg-white rounded-xl border-2 border-blue-200 overflow-hidden flex flex-col shadow-sm ring-1 ring-blue-100">
+                      <div className="h-[120px] bg-gradient-to-b from-blue-50/30 to-white flex items-center justify-center p-2 relative">
+                        <img src={ai.image} alt={ai.name} className="max-h-[90%] max-w-[90%] object-contain filter drop-shadow-sm scale-125 pt-2" style={{ imageRendering: 'pixelated' }} />
+                      </div>
+                      <div className="pb-3 text-center bg-white border-t border-blue-50 pt-2 px-1">
+                        <h4 className="font-extrabold text-[12px] text-blue-600 leading-tight">{ai.name.split(',')[0]}</h4>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
