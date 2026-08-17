@@ -17,15 +17,99 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-// ── Videos for login background ─────────────────────────────────────────────
+// ── Videos for login background (from fanglue) ─────────────────────────────
 
-const VIDEOS = [
-  '/videos/video1.mp4',
-  '/videos/video2.mp4',
-  '/videos/video3.mp4',
-  '/videos/video4.mp4',
-  '/videos/video5.mp4',
+const videoSlides = [
+  '/videos/banner1.mp4',
+  '/videos/banner2.mp4',
+  '/videos/banner3.mp4',
+  '/videos/banner4.mp4',
 ];
+
+// ── Video Carousel Component ────────────────────────────────────────────────
+
+function VideoCarouselBackground() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(1);
+  const [isFading, setIsFading] = useState(false);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const isTransitioning = useRef(false);
+
+  useEffect(() => {
+    const vid = videoRefs.current[currentIndex];
+    if (vid) {
+      vid.currentTime = 0;
+      vid.play().catch(() => {});
+    }
+    // WeChat / mobile autoplay
+    const playVideo = () => vid?.play().catch(() => {});
+    if (typeof window !== 'undefined') {
+      document.addEventListener('touchstart', playVideo, { once: true });
+    }
+    return () => {};
+  }, [currentIndex]);
+
+  const handleTimeUpdate = (idx: number) => {
+    if (idx !== currentIndex) return;
+    const video = videoRefs.current[idx];
+    if (!video || !video.duration) return;
+
+    const fadeDuration = 1.2;
+    if (video.duration - video.currentTime <= fadeDuration && !isTransitioning.current) {
+      isTransitioning.current = true;
+      const nextIdx = (currentIndex + 1) % videoSlides.length;
+      setNextIndex(nextIdx);
+
+      if (videoRefs.current[nextIdx]) {
+        videoRefs.current[nextIdx]!.currentTime = 0;
+        videoRefs.current[nextIdx]!.play().catch(() => {});
+      }
+      setIsFading(true);
+
+      setTimeout(() => {
+        setCurrentIndex(nextIdx);
+        setIsFading(false);
+        isTransitioning.current = false;
+      }, fadeDuration * 1000);
+    }
+  };
+
+  return (
+    <>
+      {videoSlides.map((src, idx) => {
+        const isActive = idx === currentIndex;
+        const isNext = idx === nextIndex;
+        let opacityClass = 'opacity-0';
+        if (isActive) {
+          opacityClass = isFading
+            ? 'opacity-0 transition-opacity duration-[1200ms] ease-out'
+            : 'opacity-100';
+        } else if (isNext && isFading) {
+          opacityClass = 'opacity-100 transition-opacity duration-[1200ms] ease-in';
+        }
+
+        return (
+          <div key={idx} className={`absolute inset-0 ${opacityClass}`}
+            style={{ zIndex: isActive ? 1 : (isNext && isFading ? 2 : 0) }}
+          >
+            <video
+              ref={el => { videoRefs.current[idx] = el; }}
+              src={src}
+              autoPlay
+              muted
+              playsInline
+              loop={false}
+              onTimeUpdate={() => handleTimeUpdate(idx)}
+              className="object-cover w-full h-full"
+            />
+          </div>
+        );
+      })}
+      {/* Light frosted overlay for form readability */}
+      <div className="absolute inset-0 bg-white/30 backdrop-blur-[4px]" style={{ zIndex: 3 }} />
+    </>
+  );
+}
 
 // ── AuthGuard Component ─────────────────────────────────────────────────────
 
@@ -39,10 +123,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Video carousel
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
   // Check existing session on mount
   useEffect(() => {
     fetch('/api/auth/me')
@@ -51,18 +131,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       .catch(() => setUser(null))
       .finally(() => setChecking(false));
   }, []);
-
-  // Video carousel
-  useEffect(() => {
-    if (!user && !checking && videoRef.current) {
-      videoRef.current.load();
-      videoRef.current.play().catch(() => {});
-    }
-  }, [currentVideoIndex, user, checking]);
-
-  const handleVideoEnd = () => {
-    setCurrentVideoIndex((prev) => (prev + 1) % VIDEOS.length);
-  };
 
   // ── Login ─────────────────────────────────────────────────────────────────
 
@@ -163,22 +231,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   return (
     <div className="h-screen w-screen flex items-center justify-center relative overflow-hidden bg-gray-100">
       {/* Background video carousel */}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        onEnded={handleVideoEnd}
-        className="absolute top-0 left-0 w-full h-full object-cover z-0 scale-[1.35] transition-opacity duration-1000"
-      >
-        <source src={VIDEOS[currentVideoIndex]} type="video/mp4" />
-      </video>
-
-      {/* Light frosted overlay */}
-      <div className="absolute top-0 left-0 w-full h-full bg-white/40 backdrop-blur-[3px] z-[1]" />
+      <VideoCarouselBackground />
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-lg mx-4">
+      <div className="relative w-full max-w-lg mx-4" style={{ zIndex: 10 }}>
         {/* Brand */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl mb-5 shadow-xl shadow-blue-600/25 hover:scale-105 transition-transform duration-300">
