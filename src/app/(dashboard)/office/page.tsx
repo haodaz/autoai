@@ -1003,7 +1003,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
       </div>
 
       {/* 右侧闲置区 (Idle Agents) */}
-      <div className="hidden md:flex w-[380px] bg-white/80 backdrop-blur-xl border-l border-gray-200/80 flex-col p-6 z-20 shadow-sm shrink-0">
+      <div className="hidden md:flex w-[520px] bg-white/80 backdrop-blur-xl border-l border-gray-200/80 flex-col p-6 z-20 shadow-sm shrink-0">
         <h2 className="text-base font-black text-gray-600 text-center mb-4">闲置 AI</h2>
         
         <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
@@ -1017,7 +1017,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
               </div>
               <div className="flex flex-wrap justify-center gap-4 mb-5">
                 {idleAIs.filter(ai => ai.category !== 'pingfang').map((ai) => (
-                  <div key={ai.id} className="w-[140px] flex flex-col items-center opacity-60 hover:opacity-100 transition-opacity cursor-default filter grayscale hover:grayscale-0 relative">
+                  <div key={ai.id} className="w-[140px] flex flex-col items-center transition-all cursor-default hover:scale-105 relative">
                     <div className="absolute top-1 right-1 z-30">
                       <Tooltip title={ai.desc} placement="top">
                         <div className="p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors bg-white/80">
@@ -1049,7 +1049,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
               </div>
               <div className="flex flex-wrap justify-center gap-4">
                 {idleAIs.filter(ai => ai.category === 'pingfang').map((ai) => (
-                  <div key={ai.id} className="w-[140px] flex flex-col items-center opacity-60 hover:opacity-100 transition-opacity cursor-default filter grayscale hover:grayscale-0 relative">
+                  <div key={ai.id} className="w-[140px] flex flex-col items-center transition-all cursor-default hover:scale-105 relative">
                     <div className="absolute top-1 right-1 z-30">
                       <Tooltip title={ai.desc} placement="top">
                         <div className="p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors bg-white/80">
