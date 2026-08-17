@@ -116,6 +116,18 @@ agents:
     trigger_keywords: ["政策", "人才引进", "补贴", "资助", "落户", "policy", "subsidy", "talent program", "引才", "海归", "创业扶持", "税收优惠", "安居", "人才计划"]
     notes: "Nova 调用平方工作台的三阶段政策检索引擎，适合处理需要政策咨询、政策比较、申请条件评估的任务。"
 
+  - name: "Atlas"
+    title: "物资AI助手 / Research Resource Specialist"
+    capabilities:
+      - 平方科研物资库检索 (VisionSquare Research Materials Search)
+      - 科研仪器检索与比较 (Lab Instrument Search & Comparison)
+      - 科研耗材/试剂检索 (Consumables & Reagents Search)
+      - 供应商信息交叉验证 (Supplier Cross-validation)
+      - 物资选型报告 (Procurement Report Generation)
+    output_format: "markdown (structured procurement report)"
+    trigger_keywords: ["物资", "仪器", "耗材", "试剂", "设备", "实验室", "科研", "采购", "PCR", "冰箱", "离心", "显微镜", "instrument", "equipment", "lab", "reagent", "consumable"]
+    notes: "Atlas 调用平方工作台的科研物资深度检索引擎，适合处理需要实验室设备采购、物资选型、供应商比较的任务。"
+
   - name: "Grace"
     title: "邮件分发专员 / Email Dispatch Specialist"
     capabilities:

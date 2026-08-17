@@ -1,6 +1,5 @@
 import { mcpToolsDataPlatform } from '@/lib/mcp/generated-tools';
-import { ENTITY_FIELD_MAP } from '@/lib/mcp/entityContext';
-import { searchWeb } from '@/lib/search';
+import { searchWeb } from '@/lib/tools/search';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
 
@@ -131,8 +130,8 @@ export async function runResourceDeepSearchStream(
 ): Promise<ReadableStream> {
   if (!query) throw new Error('Missing query');
 
-  const modelConfig = ENTITY_FIELD_MAP['VSDResearchMaterial'];
-  if (!modelConfig) throw new Error('VSDResearchMaterial 未在 ENTITY_FIELD_MAP 中注册');
+  // VSDResearchMaterial model config (inlined from entityContext)
+  const MODEL_NAME = 'VSDResearchMaterial';
 
   return new ReadableStream({
     async start(controller) {

@@ -9,13 +9,14 @@ import { ThinkBlock, ToolCallsBlock, renderPreviewStandalone, COLOR_BORDER_MAP }
 import { Building2, Cpu, Activity, History, BookOpen, Settings, Send, CheckCircle2, ChevronRight, ChevronLeft, Users, Layout, Plus, FileText, Calendar, Presentation, AlertTriangle, Scale, Mail, StopCircle, Edit, Edit3, Link2, UploadCloud, Terminal, Info, Download, MessageSquare, Wrench, PenTool, CheckCircle, XCircle, Hourglass, ChevronDown, ChevronUp, Database, Menu, X, Copy, RefreshCw, GitMerge, LogOut, UserCircle, Phone, AtSign, Camera, Save, ArrowLeft, ArrowRight, SaveAll, Loader2, Globe, ExternalLink, Eye, Search, ScrollText } from 'lucide-react';
 import { TalentDeepSearchPanel } from '@/components/tools/TalentDeepSearchPanel';
 import { PolicySearchPanel } from '@/components/tools/PolicySearchPanel';
+import { ResourceDeepSearchPanel } from '@/components/tools/ResourceDeepSearchPanel';
 
 // Webpage types
 interface WebPage { id: string; title: string; html: string; inNav: boolean; }
 interface WebSite { name: string; themeColor: string; pages: WebPage[]; }
 
 function ToolboxView({ initialPpt, onPptConsumed }: { initialPpt?: { slides: any[]; fileUrl: string; topic: string } | null; onPptConsumed?: () => void }) {
-  const [activeTool, setActiveTool] = useState<'ppt' | 'legal' | 'webpage' | 'talent' | 'policy' | null>(initialPpt ? 'ppt' : null);
+  const [activeTool, setActiveTool] = useState<'ppt' | 'legal' | 'webpage' | 'talent' | 'policy' | 'resource' | null>(initialPpt ? 'ppt' : null);
 
   // PPT State
   const [pptForm, setPptForm] = useState({ topic: initialPpt?.topic || '', slideCount: '约10页', theme: 'blue', density: 'standard', background: '', preferences: '' });
@@ -137,6 +138,12 @@ function ToolboxView({ initialPpt, onPptConsumed }: { initialPpt?: { slides: any
               <ScrollText className={`w-3.5 h-3.5 mr-2 ${activeTool === 'policy' ? 'text-emerald-500' : 'text-gray-400'}`} /> 政策检索
             </h3>
             <p className="text-[10px] text-gray-400 mt-1">平方库 + 全网三阶段检索</p>
+          </button>
+          <button onClick={() => setActiveTool('resource')} className={`w-full text-left p-3 rounded-xl transition-all ${activeTool === 'resource' ? 'bg-purple-50 border border-purple-100' : 'bg-white border border-gray-100 hover:bg-gray-50'}`}>
+            <h3 className={`text-xs font-bold flex items-center ${activeTool === 'resource' ? 'text-purple-700' : 'text-gray-700'}`}>
+              <Database className={`w-3.5 h-3.5 mr-2 ${activeTool === 'resource' ? 'text-purple-500' : 'text-gray-400'}`} /> 科研物资检索
+            </h3>
+            <p className="text-[10px] text-gray-400 mt-1">仪器/耗材/试剂 + 供应商交叉验证</p>
           </button>
           <div className="border border-gray-100 p-3 rounded-xl opacity-40 hidden md:block">
             <h3 className="text-xs font-bold text-gray-500 flex items-center"><Calendar className="w-3.5 h-3.5 mr-2 text-gray-300" /> ICS 日历工具</h3>
@@ -874,6 +881,13 @@ document.querySelectorAll('[data-image-placeholder]').forEach(el=>{el.addEventLi
         {activeTool === 'policy' && (
           <div className="flex-1 overflow-auto p-6" style={{ background: '#0f1117' }}>
             <PolicySearchPanel />
+          </div>
+        )}
+
+        {/* Resource Deep Search */}
+        {activeTool === 'resource' && (
+          <div className="flex-1 overflow-auto p-6" style={{ background: '#0f1117' }}>
+            <ResourceDeepSearchPanel />
           </div>
         )}
       </div>
