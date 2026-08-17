@@ -13,7 +13,8 @@ export const maxDuration = 120;
  * Robust JSON extraction
  */
 function extractJSON(raw: string): any {
-  let cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  let cleaned = raw.replace(/<think>[\s\S]*?<\/think>/g, '');
+  cleaned = cleaned.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   try { return JSON.parse(cleaned); } catch {}
   const objMatch = cleaned.match(/\{[\s\S]*\}/);
   if (objMatch) {

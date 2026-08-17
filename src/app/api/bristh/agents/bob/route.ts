@@ -43,6 +43,7 @@ If no exact date/time is mentioned, make a logical guess (Assume current year is
     );
 
     let rawJson = response.choices[0].message.content || '{}';
+    rawJson = rawJson.replace(/<think>[\s\S]*?<\/think>/g, '');
     rawJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsedEvent = JSON.parse(rawJson);
 

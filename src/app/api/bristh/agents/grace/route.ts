@@ -42,6 +42,7 @@ export async function POST(req: Request) {
     );
 
     let rawJson = response.choices[0].message.content || '{}';
+    rawJson = rawJson.replace(/<think>[\s\S]*?<\/think>/g, '');
     rawJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsedEmail = JSON.parse(rawJson);
 

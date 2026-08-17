@@ -71,7 +71,8 @@ Rules:
       ], { requireJson: true, maxTokens: 8192 })
     );
 
-    let rawJson = response.choices[0].message.content || '{"think": "", "slides": []}';
+    // Remove DeepSeek <think> blocks
+    rawJson = rawJson.replace(/<think>[\s\S]*?<\/think>/g, '');
     rawJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
 
     // Robust parsing — Claude often outputs trailing commas
