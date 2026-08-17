@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from 'antd';
 import { SafetyCertificateOutlined, RobotOutlined, MessageOutlined, CloseOutlined } from '@ant-design/icons';
 import { refreshAuth } from '@/hooks/useAuth';
@@ -10,41 +10,99 @@ interface LoginPromptModalProps {
   open: boolean;
   onClose: () => void;
   reason?: string;
-  onSuccess?: () => void;  // 登录成功后的回调，不传则默认 reload
+  onSuccess?: () => void;
 }
 
 const PRIMARY = '#427759';
 const PRIMARY_DARK = '#4a3fd4';
 
-// ── 群星（黄金角分布，SSR 安全，与登录页同款）
-const STARS = Array.from({ length: 18 }, (_, i) => ({
-  x:     ((i * 137.508 + 23) % 100),
-  y:     ((i * 97.33  + 17) % 100),
-  size:  Math.round((1.2 + (i % 6) * 0.7) * 10) / 10,
-  dur:   1.8 + (i % 9) * 0.4,
-  delay: (i % 13) * 0.35,
-}));
+const videoSlides = [
+  '/videos/banner1.mp4',
+  '/videos/banner2.mp4',
+  '/videos/banner3.mp4',
+  '/videos/banner4.mp4',
+];
 
-function StarField() {
+function VideoCarouselBackground() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(1);
+  const [isFading, setIsFading] = useState(false);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const isTransitioning = useRef(false);
+
+  useEffect(() => {
+    const vid = videoRefs.current[currentIndex];
+    if (vid) {
+      vid.currentTime = 0;
+      vid.play().catch(() => {});
+    }
+    // WeChat / mobile autoplay
+    const playVideo = () => vid?.play().catch(() => {});
+    document.addEventListener('touchstart', playVideo, { once: true });
+    return () => {};
+  }, [currentIndex]);
+
+  const handleTimeUpdate = (idx: number) => {
+    if (idx !== currentIndex) return;
+    const video = videoRefs.current[idx];
+    if (!video || !video.duration) return;
+
+    const fadeDuration = 1.2;
+    if (video.duration - video.currentTime <= fadeDuration && !isTransitioning.current) {
+      isTransitioning.current = true;
+      const nextIdx = (currentIndex + 1) % videoSlides.length;
+      setNextIndex(nextIdx);
+
+      if (videoRefs.current[nextIdx]) {
+        videoRefs.current[nextIdx]!.currentTime = 0;
+        videoRefs.current[nextIdx]!.play().catch(() => {});
+      }
+      setIsFading(true);
+
+      setTimeout(() => {
+        setCurrentIndex(nextIdx);
+        setIsFading(false);
+        isTransitioning.current = false;
+      }, fadeDuration * 1000);
+    }
+  };
+
   return (
     <>
-      {STARS.map((s, i) => {
-        const big = s.size >= 4, mid = s.size >= 2.8 && !big;
-        const glow = big
-          ? `0 0 ${s.size}px ${s.size*.6}px rgba(255,255,255,.9), 0 0 ${s.size*4}px ${s.size*2}px rgba(200,185,255,.5)`
-          : mid
-          ? `0 0 ${s.size}px ${s.size*.5}px rgba(255,255,255,.85), 0 0 ${s.size*3}px ${s.size*1.5}px rgba(200,185,255,.4)`
-          : `0 0 ${s.size}px ${s.size*.4}px rgba(255,255,255,.8), 0 0 ${s.size*2}px ${s.size}px rgba(210,195,255,.3)`;
+      {videoSlides.map((src, idx) => {
+        const isActive = idx === currentIndex;
+        const isNext = idx === nextIndex;
+        let opacityClass = 'opacity-0';
+        if (isActive) {
+          opacityClass = isFading
+            ? 'opacity-0 transition-opacity duration-[1200ms] ease-out'
+            : 'opacity-100';
+        } else if (isNext && isFading) {
+          opacityClass = 'opacity-100 transition-opacity duration-[1200ms] ease-in';
+        }
+
         return (
-          <div key={i} style={{
-            position: 'absolute', left: `${s.x}%`, top: `${s.y}%`,
-            width: s.size, height: s.size, borderRadius: '50%', background: '#fff',
-            boxShadow: glow,
-            animation: `starTwinkle ${s.dur}s ease-in-out ${s.delay}s infinite`,
-            pointerEvents: 'none',
-          }} />
+          <div key={idx} className={`absolute inset-0 ${opacityClass}`}
+            style={{ zIndex: isActive ? 1 : (isNext && isFading ? 2 : 0) }}
+          >
+            <video
+              ref={el => { videoRefs.current[idx] = el; }}
+              src={src}
+              autoPlay
+              muted
+              playsInline
+              loop={false}
+              onTimeUpdate={() => handleTimeUpdate(idx)}
+              className="object-cover w-full h-full"
+            />
+          </div>
         );
       })}
+      {/* Dark gradient overlay for readability */}
+      <div className="absolute inset-0" style={{
+        zIndex: 3,
+        background: 'radial-gradient(ellipse at 50% 50%, rgba(10,5,30,0.55) 0%, rgba(10,5,30,0.85) 100%)',
+      }} />
     </>
   );
 }
@@ -62,7 +120,6 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
   const [agreed, setAgreed] = useState(false);
   const [agreementModal, setAgreementModal] = useState({ open: false, title: '', url: '' });
 
-  // Countdown timer
   useEffect(() => {
     if (countdown <= 0) return;
     const t = setTimeout(() => setCountdown(c => c - 1), 1000);
@@ -72,7 +129,6 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
   if (!open) return null;
 
   const handleClose = () => {
-    // 确保 blur 当前焦点，防止 onFocus 再次触发
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -136,17 +192,18 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
   ];
 
   return (
-    /* Overlay */
     <div
       onClick={e => { if (e.target === e.currentTarget) handleClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 99999,
-        background: 'rgba(20, 10, 50, 0.72)',
-        backdropFilter: 'blur(8px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         pointerEvents: 'auto',
+        overflow: 'hidden',
       }}
     >
+      {/* Video Carousel Background */}
+      <VideoCarouselBackground />
+
       {/* Modal Card */}
       <div
         onClick={e => e.stopPropagation()}
@@ -154,31 +211,32 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
           width: '100%', maxWidth: 400,
           borderRadius: 28,
           overflow: 'hidden',
-          boxShadow: '0 32px 80px rgba(60, 40, 180, 0.4)',
+          boxShadow: '0 32px 80px rgba(0, 0, 0, 0.6)',
           margin: '0 16px',
           animation: 'loginModalIn 0.28s cubic-bezier(.4,0,.2,1)',
+          position: 'relative',
+          zIndex: 10,
+          backdropFilter: 'blur(2px)',
         }}
       >
-        {/* ── 顶部紫色区域 ── */}
+        {/* ── Top branded area ── */}
         <div style={{
-          background: 'linear-gradient(150deg, #4a3fd4 0%, #427759 55%, #9b6ff5 100%)',
+          background: 'linear-gradient(150deg, rgba(30,58,138,0.92) 0%, rgba(66,119,89,0.92) 55%, rgba(155,111,245,0.88) 100%)',
+          backdropFilter: 'blur(30px)',
           padding: '22px 24px 36px',
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* 群星背景（与登录页同款）*/}
-          <StarField />
-
-          {/* Logo行 + 关闭按钮 */}
+          {/* Logo + close */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <img
-                src="/assets/eda-logo-white.png"
-                alt="一答"
-                style={{ height: 33, objectFit: 'contain' }}
+                src="/logo.png"
+                alt="平方创想"
+                style={{ height: 30, objectFit: 'contain', filter: 'brightness(10)' }}
                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
               />
-              <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: 1 }}>智能体</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: 1 }}>智能工作台</span>
             </div>
             <button
               onClick={handleClose}
@@ -194,10 +252,10 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
           </div>
 
           <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, letterSpacing: '0.15em', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase' }}>
-            Eda, answer for truth.
+            VisionSquare Intelligent Workspace
           </div>
           <h2 style={{ fontSize: 24, fontWeight: 900, lineHeight: 1.2, margin: '0 0 16px', color: '#fff', whiteSpace: 'nowrap' }}>
-            随时随地，为您一答
+            平方工作台，为您一答
           </h2>
           {reason && (
             <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: 12, lineHeight: 1.6 }}>
@@ -206,7 +264,7 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
           )}
         </div>
 
-        {/* ── 白色表单区 ── */}
+        {/* ── White form area ── */}
         <div style={{ background: '#fff', padding: '22px 22px 18px' }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: '#14151f', marginBottom: 2 }}>免注册，一键登录</div>
           <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 18 }}>手机验证即可进入 · 新用户自动开通账号</div>
@@ -316,7 +374,7 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
             </div>
           )}
 
-          {/* 协议政策 */}
+          {/* Agreement */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '8px 0 16px', fontSize: 11, color: '#9ca3af' }}>
             <input 
               type="checkbox" 
@@ -347,10 +405,10 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
               fontFamily: 'inherit',
             }}
           >
-            {loading ? '登录中…' : '启动一答'}
+            {loading ? '登录中…' : '启动平方工作台'}
           </button>
 
-          {/* Features — Ant Design icons */}
+          {/* Features */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
             {features.map(f => (
               <div key={f.label} style={{
@@ -364,7 +422,7 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
           </div>
 
           <div style={{ textAlign: 'center', marginTop: 14, fontSize: 11, color: '#d1d5db' }}>
-            © 2026 平方创想 · 一答智能体
+            © 2026 平方创想教育科技 · VisionSquare
           </div>
         </div>
       </div>
@@ -373,10 +431,6 @@ export default function LoginPromptModal({ open, onClose, reason, onSuccess }: L
         @keyframes loginModalIn {
           from { opacity: 0; transform: translateY(30px) scale(0.96); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes starTwinkle {
-          0%, 100% { opacity: 0.25; transform: scale(0.75); }
-          50%       { opacity: 1;    transform: scale(1.2); }
         }
       `}</style>
       <Modal
