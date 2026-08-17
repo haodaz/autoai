@@ -22,7 +22,7 @@ const TOOL_SEARCH_KB: ToolDefinition = {
   type: 'function',
   function: {
     name: 'searchKnowledgeBase',
-    description: 'Search the company knowledge base for relevant information about Bristh Enrollment Partners, schools, admissions, policies, etc.',
+    description: 'Search the company knowledge base for relevant information about 平方创想教育科技, schools, admissions, policies, etc.',
     parameters: {
       type: 'object',
       properties: {
@@ -195,7 +195,7 @@ async function executeCreateCalendar(args: any) {
     description: args.description || '',
     status: 'CONFIRMED',
     busyStatus: 'BUSY',
-    organizer: { name: 'Bristh Agent (Bob)', email: 'bob@bristh.com' },
+    organizer: { name: '平方工作台 Agent (Bob)', email: 'bob@pingfang.ai' },
   };
 
   const { error, value } = ics.createEvent(event);

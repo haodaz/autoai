@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
-    const fallbackPersona = 'You are Bob, the Scheduling Assistant at Bristh Enrollment Partners. Extract meeting details from context and generate calendar events.';
+    const fallbackPersona = 'You are Bob, the Scheduling Assistant at 平方创想教育科技. Extract meeting details from context and generate calendar events.';
     
     const systemPrompt = await buildAgentPrompt('bob', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + `\n\nExtract the meeting details. Output ONLY a valid JSON object:
@@ -58,7 +58,7 @@ If no exact date/time is mentioned, make a logical guess (Assume current year is
       description: parsedEvent.description,
       status: 'CONFIRMED',
       busyStatus: 'BUSY',
-      organizer: { name: 'Bristh Agent (Bob)', email: 'bob@bristh.com' }
+      organizer: { name: '平方工作台 Agent (Bob)', email: 'bob@pingfang.ai' }
     };
 
     const { error, value } = ics.createEvent(event);

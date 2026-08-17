@@ -693,7 +693,7 @@ function ToolboxView({ initialPpt, onPptConsumed }: { initialPpt?: { slides: any
   <nav class="hidden md:flex gap-2">${navLinks}</nav>
 </header>
 <div id="site-content">${activePage?.html || ''}</div>
-<footer class="bg-gray-50 py-12 px-8 border-t"><div class="max-w-4xl mx-auto text-center opacity-50 text-sm">&copy; ${new Date().getFullYear()} ${webResult.name}. Powered by BEP AI</div></footer>
+<footer class="bg-gray-50 py-12 px-8 border-t"><div class="max-w-4xl mx-auto text-center opacity-50 text-sm">&copy; ${new Date().getFullYear()} ${webResult.name}. Powered by 平方 AI</div></footer>
 <script>
 document.querySelectorAll('.nav-link').forEach(link=>{link.addEventListener('click',e=>{e.preventDefault();window.parent.postMessage({type:'NAVIGATE',pageId:link.getAttribute('data-page-id')},'*')})});
 document.querySelectorAll('[data-image-placeholder]').forEach(el=>{el.addEventListener('click',()=>{const input=document.createElement('input');input.type='file';input.accept='image/*';input.onchange=e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{el.innerHTML='<img src="'+ev.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px" />'};reader.readAsDataURL(file)};input.click()})});

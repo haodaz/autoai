@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     });
 
     // 2. Build prompt
-    const fallbackPersona = 'You are Iris, the Web Designer at Bristh Enrollment Partners. You create stunning marketing landing pages using Tailwind CSS.';
+    const fallbackPersona = 'You are Iris, the Web Designer at 平方创想教育科技. You create stunning marketing landing pages using Tailwind CSS.';
     
     const systemPrompt = await buildAgentPrompt('iris', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + `\n\nBased on this context, generate a complete multi-page marketing website as a JSON object.

@@ -141,7 +141,7 @@ export async function POST(req: Request) {
     });
 
     // Generate a unique Message-ID for reply tracking
-    const messageId = `<approval-${contextId}-${crypto.randomUUID().substring(0, 8)}@bristh.autoffice>`;
+    const messageId = `<approval-${contextId}-${crypto.randomUUID().substring(0, 8)}@pingfang.autoffice>`;
 
     // Build the full HTML email
     const htmlEmail = `
@@ -188,9 +188,9 @@ export async function POST(req: Request) {
     });
 
     await transporter.sendMail({
-      from: `"Bristh Autoffice" <${process.env.IMAP_USER}>`,
+      from: `"平方工作台" <${process.env.IMAP_USER}>`,
       to: userEmail,
-      subject: `[Autoffice] ${awaitingTasks.length} 项任务需要您的审批确认`,
+      subject: `[平方工作台] ${awaitingTasks.length} 项任务需要您的审批确认`,
       html: htmlEmail,
       messageId,
       attachments: mailAttachments,

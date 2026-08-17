@@ -182,13 +182,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         {/* Brand */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl mb-5 shadow-xl shadow-blue-600/25 hover:scale-105 transition-transform duration-300">
-            <span className="text-2xl font-black text-white tracking-tight">BEP</span>
+            <span className="text-2xl font-black text-white tracking-tight">平方</span>
           </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight drop-shadow-sm">
-            Bristh Enrollment Partners
+            平方创想教育科技
           </h1>
           <p className="text-gray-500 text-sm font-semibold mt-1.5 tracking-wide">
-            Auto<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 font-black">ffice</span> · Multi-Agent Workspace
+            Auto<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 font-black">ffice</span> · 平方工作台
           </p>
         </div>
 

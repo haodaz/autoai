@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
-    const fallbackPersona = 'You are Edda, the Presentation Specialist at Bristh Enrollment Partners. Transform text into structured slide presentations.';
+    const fallbackPersona = 'You are Edda, the Presentation Specialist at 平方创想教育科技. Transform text into structured slide presentations.';
     
     const systemPrompt = await buildAgentPrompt('edda', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + `\n\nOutput exactly in this JSON format:
@@ -130,7 +130,7 @@ Rules:
     // Title Slide (Cover)
     const coverSlide = pptx.addSlide();
     coverSlide.background = { color: '1E3A8A' };
-    coverSlide.addText('Bristh Enrollment Partners', {
+    coverSlide.addText('平方创想教育科技', {
         x: '10%', y: '40%', w: '80%', h: 1, 
         fontSize: 36, color: 'FFFFFF', bold: true, align: 'center'
     });

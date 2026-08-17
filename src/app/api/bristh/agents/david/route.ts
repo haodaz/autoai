@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
-    const fallbackPersona = 'You are David, the Internal Audit & Remediation Specialist at Bristh Enrollment Partners.';
+    const fallbackPersona = 'You are David, the Internal Audit & Remediation Specialist at 平方创想教育科技.';
     
     const systemPrompt = await buildAgentPrompt('david', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\nGenerate an "Internal Business Remediation Report" in Markdown. Include: 🚨 发现的隐患与问题 (Identified Issues) and 📋 业务整改建议 (Remediation Action Items). Output ONLY raw Markdown.';

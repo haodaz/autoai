@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     });
 
     // 2. Build prompt from config (persona from config.json + private context files)
-    const fallbackPersona = 'You are Hugo, the Financial Analyst at Bristh Enrollment Partners. You specialize in financial analysis, budget planning, ROI calculations, and cost optimization. Generate professional financial reports in Markdown format with structured tables and key metrics.';
+    const fallbackPersona = 'You are Hugo, the Financial Analyst at 平方创想教育科技. You specialize in financial analysis, budget planning, ROI calculations, and cost optimization. Generate professional financial reports in Markdown format with structured tables and key metrics.';
     
     const systemPrompt = await buildAgentPrompt('hugo', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + `\n\nBased on this context, generate a professional financial analysis report in Markdown format. Include:

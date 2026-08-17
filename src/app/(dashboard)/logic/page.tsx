@@ -57,7 +57,7 @@ export default function LogicWhitepaper() {
           {/* Header */}
           <div className="pb-8 border-b border-gray-200">
             <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">
-              <BookOpen className="w-8 h-8 text-indigo-500 mr-4" /> Bristh Multi-Agent 架构白皮书
+              <BookOpen className="w-8 h-8 text-indigo-500 mr-4" /> 平方 Multi-Agent 架构白皮书
             </h1>
             <p className="text-gray-400 mt-2 text-sm font-medium">
               V3.0.0 — 系统底层逻辑、审批闭环、对话任务打通与知识库分层说明手册
@@ -66,7 +66,7 @@ export default function LogicWhitepaper() {
 
           {/* Org Chart Illustration */}
           <div className="flex justify-center py-2">
-            <img src="/pixel-org-chart.png" alt="BEP Organization - Boss + Chief + AI Workers" className="w-80 h-auto" />
+            <img src="/pixel-org-chart.png" alt="平方 Organization - Boss + Chief + AI Workers" className="w-80 h-auto" />
           </div>
 
           {/* Section 1: Core Architecture */}
@@ -390,7 +390,7 @@ export default function LogicWhitepaper() {
                 <br/>
                 <div className="text-gray-500">## 已学教训</div>
                 <div>- 中英双语时不翻译人名和学校名</div>
-                <div>- 署名统一用 &quot;BEP office AI team&quot;</div>
+                <div>- 署名统一用 &quot;平方工作台 AI team&quot;</div>
                 <br/>
                 <div className="text-gray-500">## 用户偏好</div>
                 <div>- 文档默认中文，邮件用英文</div>

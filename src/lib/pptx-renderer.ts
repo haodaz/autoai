@@ -39,7 +39,7 @@ export async function renderPPTX(options: RenderPPTXOptions): Promise<{ fileUrl:
   // Cover Slide
   const coverSlide = pptx.addSlide();
   coverSlide.background = { color: colors.primary };
-  coverSlide.addText(coverTitle || 'Bristh Enrollment Partners', {
+  coverSlide.addText(coverTitle || '平方创想教育科技', {
     x: '10%', y: '35%', w: '80%', h: 1,
     fontSize: 36, color: 'FFFFFF', bold: true, align: 'center',
   });

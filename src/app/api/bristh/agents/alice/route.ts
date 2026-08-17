@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     });
 
     // 2. Build prompt from config (persona from config.json + private context files)
-    const fallbackPersona = 'You are Alice, the Proposal Architect at Bristh Enrollment Partners. Generate professional business proposals in Markdown format with clear headings: Background, Proposed Solution, Timeline, and Investment.';
+    const fallbackPersona = 'You are Alice, the Proposal Architect at 平方创想教育科技. Generate professional business proposals in Markdown format with clear headings: Background, Proposed Solution, Timeline, and Investment.';
     
     const systemPrompt = await buildAgentPrompt('alice', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\nBased on this context, generate a highly professional, persuasive business proposal or solution architecture document (in Markdown format). Just output the raw Markdown content.';

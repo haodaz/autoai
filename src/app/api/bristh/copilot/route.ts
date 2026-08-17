@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     history.push({ role: 'user', content: message });
 
     // Build agent-specific prompt with persona
-    const fallbackPersona = `You are ${task.agent}, a specialist AI at Bristh Enrollment Partners.`;
+    const fallbackPersona = `You are ${task.agent}, a specialist AI at 平方创想教育科技.`;
     const agentPrompt = await buildAgentPrompt(task.agent.toLowerCase(), task.instruction, task.context.rawContent, fallbackPersona, locale);
 
     let systemPrompt = `${agentPrompt}

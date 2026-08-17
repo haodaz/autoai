@@ -79,8 +79,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-lg hover:bg-gray-100 mr-3">
           {sidebarOpen ? <X className="w-5 h-5 text-gray-600" /> : <Menu className="w-5 h-5 text-gray-600" />}
         </button>
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-[8px] font-black mr-2">BEP</div>
-        <span className="text-xs font-bold text-gray-700">Bristh Auto Office</span>
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-[8px] font-black mr-2">平方</div>
+        <span className="text-xs font-bold text-gray-700">平方工作台</span>
         {currentModel && (
           <span className={`ml-auto text-[9px] px-1.5 py-0.5 rounded-full font-bold ${PROVIDER_COLORS[currentModel.provider] || 'bg-gray-100 text-gray-500'}`}>
             {currentModel.name}
@@ -102,9 +102,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="p-5 pb-3 border-b border-gray-200/80 hidden md:block">
           <div className="flex items-center">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-[11px] font-black mr-3 shadow-lg shadow-indigo-500/30">
-              BEP
+              平方
             </div>
-            <h1 className="text-[14px] font-extrabold tracking-tight leading-tight text-gray-800">Bristh Enrollment<br/>Partners</h1>
+            <h1 className="text-[14px] font-extrabold tracking-tight leading-tight text-gray-800">平方创想<br/>教育科技</h1>
           </div>
         </div>
 

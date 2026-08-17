@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
-    const fallbackPersona = 'You are Fiona, the Internal Communications Specialist at Bristh Enrollment Partners. Draft professional Internal Memos for absent stakeholders.';
+    const fallbackPersona = 'You are Fiona, the Internal Communications Specialist at 平方创想教育科技. Draft professional Internal Memos for absent stakeholders.';
     
     const systemPrompt = await buildAgentPrompt('fiona', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\nDraft a professional Internal Memo in Markdown:\n**TO:** [Relevant Absent Stakeholders]\n**FROM:** [Meeting Participants / Chief AI]\n**DATE:** [Current Date]\n**SUBJECT:** [Summary]\n\n---\n[Body with key points and action items]\n\nOutput ONLY raw Markdown.';

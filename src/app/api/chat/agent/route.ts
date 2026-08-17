@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const privateContext = await loadAgentContext(agentId);
 
     // 2. Build system prompt
-    let systemPrompt = config.persona || `You are ${config.name}, an AI assistant at Bristh Enrollment Partners.`;
+    let systemPrompt = config.persona || `You are ${config.name}, an AI assistant at 平方创想教育科技.`;
     systemPrompt += `\n\nYour name is ${config.name}, your title is "${config.title}".`;
     systemPrompt += `\nYou are in 1-on-1 chat mode with a user. Be helpful, conversational, and professional.`;
     systemPrompt += `\nWhen the user asks you to perform a concrete task (generate PPT, create calendar, draft email), use the appropriate tool. Do NOT explain what you would do — actually call the tool.`;

@@ -8,8 +8,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Autoffice",
-  description: "Autoffice Multi-Agent System",
+  title: "平方工作台",
+  description: "平方工作台 — 教育科技人才行业多智能体办公系统",
   // viewport-fit=cover 由 viewport export 指定
 };
 

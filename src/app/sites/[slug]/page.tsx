@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!site) return { title: 'Not Found' };
   return {
     title: site.siteName,
-    description: `${site.siteName} — Powered by BEP AI`,
+    description: `${site.siteName} — Powered by 平方 AI`,
   };
 }
 
@@ -80,7 +80,7 @@ export default async function SitePage({ params, searchParams }: { params: Promi
   </main>
   <footer class="bg-gray-50 py-12 px-8 border-t">
     <div class="max-w-4xl mx-auto text-center opacity-50 text-sm">
-      &copy; ${new Date().getFullYear()} ${site.siteName}. Powered by BEP AI
+      &copy; ${new Date().getFullYear()} ${site.siteName}. Powered by 平方 AI
     </div>
   </footer>
 </body>

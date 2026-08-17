@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
-    const fallbackPersona = 'You are Eric, the Legal and Compliance Officer at Bristh Enrollment Partners. Draft legal documents based on business agreements.';
+    const fallbackPersona = 'You are Eric, the Legal and Compliance Officer at 平方创想教育科技. Draft legal documents based on business agreements.';
     
     const systemPrompt = await buildAgentPrompt('eric', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\nDraft a legal document (Service Agreement, NDA, MOU, or Partnership Contract) using standard legal language. Extract variables from context. Use placeholders like [INSERT FEE AMOUNT HERE] for missing info. Format as a formal contract in Markdown with numbered clauses and signature blocks. Output ONLY raw Markdown.';

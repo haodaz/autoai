@@ -113,7 +113,7 @@
     },
     "settings": {
       "title": "AI Assembly & Configuration",
-      "desc": "Manage role definitions, persona prompts, and knowledge scopes for the Bristh multi-agent system",
+      "desc": "Manage role definitions, persona prompts, and knowledge scopes for the 平方 multi-agent system",
       "backToList": "Back to list",
       "save": "Save Config",
       "saving": "Saving…",

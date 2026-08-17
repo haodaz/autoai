@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
-    const fallbackPersona = 'You are Grace, the Email Dispatch Specialist at Bristh Enrollment Partners. Compose and send professional emails with attachments.';
+    const fallbackPersona = 'You are Grace, the Email Dispatch Specialist at 平方创想教育科技. Compose and send professional emails with attachments.';
     
     const systemPrompt = await buildAgentPrompt('grace', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + `\n\nExtract email details. Output ONLY a valid JSON object:
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
     const toEmail = parsedEmail.to && parsedEmail.to.includes('@') ? parsedEmail.to : 'haoz214@gmail.com';
 
     await transporter.sendMail({
-      from: `"Bristh Enrollment Partners" <${process.env.IMAP_USER}>`,
+      from: `"平方创想教育科技" <${process.env.IMAP_USER}>`,
       to: toEmail,
       cc: parsedEmail.cc || undefined,
       subject: parsedEmail.subject,

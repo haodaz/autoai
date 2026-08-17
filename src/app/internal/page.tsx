@@ -61,7 +61,7 @@ export default function InternalDashboard() {
           <div className="mt-6 md:mt-0">
             <div className="inline-flex items-center px-5 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
               <Sparkles className="w-5 h-5 text-yellow-300 mr-2" />
-              <span className="font-semibold text-sm tracking-wide">HaoAI v2.4</span>
+              <span className="font-semibold text-sm tracking-wide">平方工作台 v2.4</span>
             </div>
           </div>
         </div>

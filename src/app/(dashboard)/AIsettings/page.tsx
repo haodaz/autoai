@@ -76,7 +76,7 @@ export default function AISettingsView() {
               <h1 className="text-2xl font-black text-gray-800 flex items-center">
                 <Settings className="w-6 h-6 mr-3 text-indigo-500" /> AI 装配与配置
               </h1>
-              <p className="text-sm text-gray-400 mt-1">管理 Bristh 多智能体系统的角色设定、人格指令和知识范围</p>
+              <p className="text-sm text-gray-400 mt-1">管理 平方多智能体系统的角色设定、人格指令和知识范围</p>
             </div>
           </div>
 
