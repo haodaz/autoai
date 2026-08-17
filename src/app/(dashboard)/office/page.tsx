@@ -1031,6 +1031,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
                       </div>
                       <div className="pb-3 text-center bg-white border-t border-gray-50 pt-2 px-1">
                         <h4 className="font-extrabold text-[12px] text-gray-500 leading-tight">{ai.name.split(',')[0]}</h4>
+                        <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{ai.name.split(',')[1]?.trim() || ''}</p>
                       </div>
                     </div>
                   </div>
@@ -1063,6 +1064,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
                       </div>
                       <div className="pb-3 text-center bg-white border-t border-blue-50 pt-2 px-1">
                         <h4 className="font-extrabold text-[12px] text-blue-600 leading-tight">{ai.name.split(',')[0]}</h4>
+                        <p className="text-[10px] text-blue-400 mt-0.5 leading-tight">{ai.name.split(',')[1]?.trim() || ''}</p>
                       </div>
                     </div>
                   </div>
