@@ -332,9 +332,9 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
             setActiveNodes(prev => prev.map(n => n.agent === agentName ? {...n, status: 'done'} : n));
             return;
           }
-          throw new Error(`Failed with status ${agentRes.status}`);
+          const errData = await agentRes.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed with status ${agentRes.status}`);
         }
-
         const agentData = await agentRes.json();
         if (agentData.task?.thinkLog) addLog(agentName, `[Thinking Completed]`);
         if (agentData.task?.toolCallsLog) addLog(agentName, `[Tool Dispatched: ${JSON.parse(agentData.task.toolCallsLog)[0]?.tool}]`);
@@ -416,7 +416,10 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId, locale: i18n.language }),
       });
-      if (!agentRes.ok) throw new Error(`Failed with status ${agentRes.status}`);
+      if (!agentRes.ok) {
+        const errData = await agentRes.json().catch(() => ({}));
+        throw new Error(errData.error || `Failed with status ${agentRes.status}`);
+      }
       const agentData = await agentRes.json();
       let summary = '';
       try {
@@ -476,7 +479,10 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ taskId: node.taskId, locale: i18n.language }),
             });
-            if (!agentRes.ok) throw new Error(`Failed with status ${agentRes.status}`);
+            if (!agentRes.ok) {
+              const errData = await agentRes.json().catch(() => ({}));
+              throw new Error(errData.error || `Failed with status ${agentRes.status}`);
+            }
             const agentData = await agentRes.json();
             let summary = '';
             try {
