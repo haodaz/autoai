@@ -872,21 +872,33 @@ document.querySelectorAll('[data-image-placeholder]').forEach(el=>{el.addEventLi
 
         {/* Talent Deep Search */}
         {activeTool === 'talent' && (
-          <div className="flex-1 overflow-auto p-6" style={{ background: '#0f1117' }}>
+          <div className="max-w-4xl mx-auto p-8 pb-20">
+            <div className="mb-8">
+              <h1 className="text-2xl font-black text-gray-900">人才深度检索</h1>
+              <p className="text-sm text-gray-400 mt-1">ORCID + Scholar + 平方库多源交叉验证</p>
+            </div>
             <TalentDeepSearchPanel />
           </div>
         )}
 
         {/* Policy Search */}
         {activeTool === 'policy' && (
-          <div className="flex-1 overflow-auto p-6" style={{ background: '#0f1117' }}>
+          <div className="max-w-4xl mx-auto p-8 pb-20">
+            <div className="mb-8">
+              <h1 className="text-2xl font-black text-gray-900">政策检索</h1>
+              <p className="text-sm text-gray-400 mt-1">平方库 + 全网三阶段深度检索与匹配</p>
+            </div>
             <PolicySearchPanel />
           </div>
         )}
 
         {/* Resource Deep Search */}
         {activeTool === 'resource' && (
-          <div className="flex-1 overflow-auto p-6" style={{ background: '#0f1117' }}>
+          <div className="max-w-4xl mx-auto p-8 pb-20">
+            <div className="mb-8">
+              <h1 className="text-2xl font-black text-gray-900">科研物资检索</h1>
+              <p className="text-sm text-gray-400 mt-1">仪器/耗材/试剂 + 供应商交叉验证</p>
+            </div>
             <ResourceDeepSearchPanel />
           </div>
         )}
