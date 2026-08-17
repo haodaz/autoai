@@ -1,19 +1,21 @@
 
 'use client';
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Tooltip, Spin } from 'antd';
 import { marked } from 'marked';
 import { useWorkspace } from '@/components/layout/WorkspaceContext';
 import { ThinkBlock, ToolCallsBlock, renderPreviewStandalone, COLOR_BORDER_MAP } from '@/components/shared/UIBlocks';
-import { Building2, Cpu, Activity, History, BookOpen, Settings, Send, CheckCircle2, ChevronRight, ChevronLeft, Users, Layout, Plus, FileText, Calendar, Presentation, AlertTriangle, Scale, Mail, StopCircle, Edit, Edit3, Link2, UploadCloud, Terminal, Info, Download, MessageSquare, Wrench, PenTool, CheckCircle, XCircle, Hourglass, ChevronDown, ChevronUp, Database, Menu, X, Copy, RefreshCw, GitMerge, LogOut, UserCircle, Phone, AtSign, Camera, Save, ArrowLeft, ArrowRight, SaveAll, Loader2, Globe, ExternalLink, Eye } from 'lucide-react';
+import { Building2, Cpu, Activity, History, BookOpen, Settings, Send, CheckCircle2, ChevronRight, ChevronLeft, Users, Layout, Plus, FileText, Calendar, Presentation, AlertTriangle, Scale, Mail, StopCircle, Edit, Edit3, Link2, UploadCloud, Terminal, Info, Download, MessageSquare, Wrench, PenTool, CheckCircle, XCircle, Hourglass, ChevronDown, ChevronUp, Database, Menu, X, Copy, RefreshCw, GitMerge, LogOut, UserCircle, Phone, AtSign, Camera, Save, ArrowLeft, ArrowRight, SaveAll, Loader2, Globe, ExternalLink, Eye, Search, ScrollText } from 'lucide-react';
+import { TalentDeepSearchPanel } from '@/components/tools/TalentDeepSearchPanel';
+import { PolicySearchPanel } from '@/components/tools/PolicySearchPanel';
 
 // Webpage types
 interface WebPage { id: string; title: string; html: string; inNav: boolean; }
 interface WebSite { name: string; themeColor: string; pages: WebPage[]; }
 
 function ToolboxView({ initialPpt, onPptConsumed }: { initialPpt?: { slides: any[]; fileUrl: string; topic: string } | null; onPptConsumed?: () => void }) {
-  const [activeTool, setActiveTool] = useState<'ppt' | 'legal' | 'webpage' | null>(initialPpt ? 'ppt' : null);
+  const [activeTool, setActiveTool] = useState<'ppt' | 'legal' | 'webpage' | 'talent' | 'policy' | null>(initialPpt ? 'ppt' : null);
 
   // PPT State
   const [pptForm, setPptForm] = useState({ topic: initialPpt?.topic || '', slideCount: '约10页', theme: 'blue', density: 'standard', background: '', preferences: '' });
@@ -122,6 +124,19 @@ function ToolboxView({ initialPpt, onPptConsumed }: { initialPpt?: { slides: any
               <Globe className={`w-3.5 h-3.5 mr-2 ${activeTool === 'webpage' ? 'text-teal-500' : 'text-gray-400'}`} /> 宣传页生成器
             </h3>
             <p className="text-[10px] text-gray-400 mt-1">AI 生成市场宣传着陆页</p>
+          </button>
+          <div className="mt-2 mb-1 px-2 hidden md:block"><span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">行业深度工具</span></div>
+          <button onClick={() => setActiveTool('talent')} className={`w-full text-left p-3 rounded-xl transition-all ${activeTool === 'talent' ? 'bg-blue-50 border border-blue-100' : 'bg-white border border-gray-100 hover:bg-gray-50'}`}>
+            <h3 className={`text-xs font-bold flex items-center ${activeTool === 'talent' ? 'text-blue-700' : 'text-gray-700'}`}>
+              <Search className={`w-3.5 h-3.5 mr-2 ${activeTool === 'talent' ? 'text-blue-500' : 'text-gray-400'}`} /> 人才深度检索
+            </h3>
+            <p className="text-[10px] text-gray-400 mt-1">ORCID + Scholar + 平方库多源交叉</p>
+          </button>
+          <button onClick={() => setActiveTool('policy')} className={`w-full text-left p-3 rounded-xl transition-all ${activeTool === 'policy' ? 'bg-emerald-50 border border-emerald-100' : 'bg-white border border-gray-100 hover:bg-gray-50'}`}>
+            <h3 className={`text-xs font-bold flex items-center ${activeTool === 'policy' ? 'text-emerald-700' : 'text-gray-700'}`}>
+              <ScrollText className={`w-3.5 h-3.5 mr-2 ${activeTool === 'policy' ? 'text-emerald-500' : 'text-gray-400'}`} /> 政策检索
+            </h3>
+            <p className="text-[10px] text-gray-400 mt-1">平方库 + 全网三阶段检索</p>
           </button>
           <div className="border border-gray-100 p-3 rounded-xl opacity-40 hidden md:block">
             <h3 className="text-xs font-bold text-gray-500 flex items-center"><Calendar className="w-3.5 h-3.5 mr-2 text-gray-300" /> ICS 日历工具</h3>
@@ -847,6 +862,20 @@ document.querySelectorAll('[data-image-placeholder]').forEach(el=>{el.addEventLi
             </div>
           );
         })()}
+
+        {/* Talent Deep Search */}
+        {activeTool === 'talent' && (
+          <div className="flex-1 overflow-auto p-6" style={{ background: '#0f1117' }}>
+            <TalentDeepSearchPanel />
+          </div>
+        )}
+
+        {/* Policy Search */}
+        {activeTool === 'policy' && (
+          <div className="flex-1 overflow-auto p-6" style={{ background: '#0f1117' }}>
+            <PolicySearchPanel />
+          </div>
+        )}
       </div>
     </div>
   );
