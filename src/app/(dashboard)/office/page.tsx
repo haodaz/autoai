@@ -406,6 +406,34 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
     }
   };
 
+  // Handle retrying a failed task
+  const handleRetryTask = async (taskId: string, agentName: string) => {
+    addLog(agentName, '🔄 用户手动重试执行...');
+    setActiveNodes(prev => prev.map(n => n.taskId === taskId ? { ...n, status: 'working' } : n));
+    try {
+      const agentRes = await fetch(`/api/bristh/agents/${agentName.toLowerCase()}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId, locale: i18n.language }),
+      });
+      if (!agentRes.ok) throw new Error(`Failed with status ${agentRes.status}`);
+      const agentData = await agentRes.json();
+      let summary = '';
+      try {
+        const payload = agentData.task?.resultPayload;
+        if (payload) { const parsed = JSON.parse(payload); summary = parsed.summary || ''; }
+      } catch {}
+      addLog(agentName, '✅ Completed.');
+      const requiresApproval = agentData.task?.requiresApproval;
+      const finalStatus = requiresApproval ? 'awaiting_approval' : 'done';
+      if (requiresApproval) addLog(agentName, `🟡 需要人工审批确认才能继续。`);
+      setActiveNodes(prev => prev.map(n => n.taskId === taskId ? { ...n, status: finalStatus, summary } : n));
+    } catch (err: any) {
+      addLog(agentName, `❌ Error: ${err.message}`);
+      setActiveNodes(prev => prev.map(n => n.taskId === taskId ? { ...n, status: 'failed' } : n));
+    }
+  };
+
   // Handle approving a single task
   const handleApproveTask = async (taskId: string, agentName: string) => {
     addLog(agentName, '✅ 用户批准通过');
@@ -948,7 +976,16 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
                                 ) : isDone ? (
                                   <p>✅ 已完成</p>
                                 ) : isFailed ? (
-                                  <p>❌ 执行失败</p>
+                                  <div className="flex items-center justify-between">
+                                    <p>❌ 执行失败</p>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (node.taskId) handleRetryTask(node.taskId, node.agent);
+                                      }}
+                                      className="px-2 py-0.5 bg-red-100 text-red-600 rounded shadow-sm text-[9px] font-bold hover:bg-red-200 transition-colors"
+                                    >重试</button>
+                                  </div>
                                 ) : isWorking ? (
                                   <p>🔄 执行中...</p>
                                 ) : (
