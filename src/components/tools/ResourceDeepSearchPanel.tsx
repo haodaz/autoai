@@ -104,8 +104,9 @@ export function ResourceDeepSearchPanel() {
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
             style={{
               width: '100%', padding: '10px 12px 10px 36px', borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)',
-              color: '#e8e8e8', fontSize: 14, outline: 'none',
+              border: '1px solid #e5e7eb', background: '#fff',
+              color: '#111827', fontSize: 14, outline: 'none',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
             }}
           />
         </div>
@@ -114,11 +115,12 @@ export function ResourceDeepSearchPanel() {
           onChange={e => setResourceType(e.target.value)}
           style={{
             flex: '0 0 120px', padding: '10px 12px', borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)',
-            color: '#e8e8e8', fontSize: 13, outline: 'none',
+            border: '1px solid #e5e7eb', background: '#fff',
+            color: '#111827', fontSize: 13, outline: 'none',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
           }}
         >
-          {RESOURCE_TYPES.map(t => <option key={t.value} value={t.value} style={{ background: '#1a1a2e' }}>{t.label}</option>)}
+          {RESOURCE_TYPES.map(t => <option key={t.value} value={t.value} style={{ background: '#fff', color: '#111827' }}>{t.label}</option>)}
         </select>
         <input
           placeholder="品牌筛选 (选填)"
@@ -127,8 +129,9 @@ export function ResourceDeepSearchPanel() {
           onKeyDown={e => e.key === 'Enter' && handleSearch()}
           style={{
             flex: '0 1 140px', padding: '10px 12px', borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)',
-            color: '#e8e8e8', fontSize: 14, outline: 'none',
+            border: '1px solid #e5e7eb', background: '#fff',
+            color: '#111827', fontSize: 14, outline: 'none',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
           }}
         />
         <button
@@ -150,31 +153,31 @@ export function ResourceDeepSearchPanel() {
       <div style={{ display: 'flex', gap: 16, flex: 1, minHeight: 0, flexWrap: 'wrap' }}>
         {/* Logs */}
         <div style={{
-          flex: '1 1 280px', background: 'rgba(255,255,255,0.04)', borderRadius: 12,
-          border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-          maxHeight: 500,
+          flex: '1 1 280px', background: '#fff', borderRadius: 12,
+          border: '1px solid #e5e7eb', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+          maxHeight: 500, boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
           <div
             onClick={() => setLogsExpanded(!logsExpanded)}
             style={{
               padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)',
-              background: 'rgba(255,255,255,0.02)',
+              cursor: 'pointer', borderBottom: '1px solid #e5e7eb',
+              background: '#f9fafb',
             }}
           >
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#aaa' }}>检索进度 ({logs.length})</span>
-            {logsExpanded ? <ChevronUp size={14} color="#888" /> : <ChevronDown size={14} color="#888" />}
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#4b5563' }}>检索进度 ({logs.length})</span>
+            {logsExpanded ? <ChevronUp size={14} color="#6b7280" /> : <ChevronDown size={14} color="#6b7280" />}
           </div>
           {logsExpanded && (
             <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
               {logs.map((log, i) => (
-                <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '4px 0', fontSize: 12, color: '#bbb' }}>
+                <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '4px 0', fontSize: 12, color: '#374151' }}>
                   <span style={{ marginTop: 2, flexShrink: 0 }}>{getStatusIcon(log.status)}</span>
                   <span>{log.message}</span>
                 </div>
               ))}
               {logs.length === 0 && !loading && (
-                <div style={{ color: '#666', fontSize: 12, padding: 8 }}>输入物资名称后点击搜索</div>
+                <div style={{ color: '#9ca3af', fontSize: 12, padding: 8 }}>输入物资名称后点击搜索</div>
               )}
             </div>
           )}
@@ -182,21 +185,21 @@ export function ResourceDeepSearchPanel() {
 
         {/* Report */}
         <div ref={reportRef} style={{
-          flex: '2 1 400px', background: 'rgba(255,255,255,0.04)', borderRadius: 12,
-          border: '1px solid rgba(255,255,255,0.08)', padding: 20, overflowY: 'auto',
-          maxHeight: 500,
+          flex: '2 1 400px', background: '#fff', borderRadius: 12,
+          border: '1px solid #e5e7eb', padding: 20, overflowY: 'auto',
+          maxHeight: 500, boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#aaa', marginBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#4b5563', marginBottom: 12, borderBottom: '1px solid #e5e7eb', paddingBottom: 8 }}>
             AI 物资检索报告
           </div>
           {report ? (
             <div
-              className="prose prose-invert prose-sm max-w-none"
-              style={{ fontSize: 13, lineHeight: 1.7, color: '#ddd' }}
+              className="prose prose-sm max-w-none"
+              style={{ fontSize: 13, lineHeight: 1.7, color: '#1f2937' }}
               dangerouslySetInnerHTML={{ __html: marked(report) as string }}
             />
           ) : (
-            <div style={{ color: '#555', fontSize: 13, marginTop: 20 }}>
+            <div style={{ color: '#9ca3af', fontSize: 13, marginTop: 20 }}>
               {loading ? '等待检索完成并生成报告...' : '暂无内容，请发起检索'}
             </div>
           )}
