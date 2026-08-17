@@ -818,7 +818,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
         {activeAIs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center flex flex-col items-center max-w-md">
-              <img src="/pixel-office.png" alt="平方 Virtual Office" className="w-96 h-96 object-contain mb-4" />
+              <img src="/office_hero.png" alt="平方创想 VisionSquare AI Office" className="object-contain mb-4" style={{ width: 600, maxWidth: '100%' }} />
               <p className="text-gray-400 font-medium text-sm">暂无参与的智能体，等待 Chief 分派...</p>
               <p className="text-gray-300 text-xs mt-1">在上方输入框中提交任务，Chief 将自动调度 AI 团队</p>
             </div>

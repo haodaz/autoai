@@ -218,7 +218,7 @@ function SidebarInner() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden', margin: '0 auto',
             }}>
-              <img alt="yida" className="w-[180%] h-[180%] max-w-none object-center" src="/assets/cute_ai_orb_home.png" />
+              <img alt="平方创想" className="w-[180%] h-[180%] max-w-none object-center" src="/logo.png" style={{ objectFit: 'contain' }} />
             </div>
           ) : (
             <div className={s.logoRow}>
@@ -227,7 +227,7 @@ function SidebarInner() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 overflow: 'hidden', flexShrink: 0,
               }}>
-                <img alt="yida" className="w-[180%] h-[180%] max-w-none object-center" src="/assets/cute_ai_orb_home.png" />
+                <img alt="平方创想" className="w-[180%] h-[180%] max-w-none object-center" src="/logo.png" style={{ objectFit: 'contain' }} />
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{t('sidebar.title')}</div>

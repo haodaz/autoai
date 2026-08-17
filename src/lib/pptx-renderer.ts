@@ -1,9 +1,21 @@
 import PptxGenJS from 'pptxgenjs';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // ============================================
 // Shared PPTX Renderer
 // Used by both Toolbox (manual tool call) and Edda (AI agent)
 // ============================================
+
+// Load logo as base64 for embedding in PPTX
+let LOGO_BASE64: string | null = null;
+try {
+  const logoPath = path.join(process.cwd(), 'public', 'logo.png');
+  if (fs.existsSync(logoPath)) {
+    const logoBuffer = fs.readFileSync(logoPath);
+    LOGO_BASE64 = 'data:image/png;base64,' + logoBuffer.toString('base64');
+  }
+} catch { /* logo not available */ }
 
 export interface SlideData {
   title: string;
@@ -39,6 +51,16 @@ export async function renderPPTX(options: RenderPPTXOptions): Promise<{ fileUrl:
   // Cover Slide
   const coverSlide = pptx.addSlide();
   coverSlide.background = { color: colors.primary };
+
+  // Add logo to cover slide (top-center)
+  if (LOGO_BASE64) {
+    coverSlide.addImage({
+      data: LOGO_BASE64,
+      x: '35%', y: '10%', w: '30%', h: 0.8,
+      sizing: { type: 'contain', w: 3, h: 0.8 },
+    });
+  }
+
   coverSlide.addText(coverTitle || '平方创想教育科技', {
     x: '10%', y: '35%', w: '80%', h: 1,
     fontSize: 36, color: 'FFFFFF', bold: true, align: 'center',

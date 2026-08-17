@@ -3,6 +3,31 @@ import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import { buildAgentPrompt } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
+import { runResourceDeepSearchStream } from '@/lib/tools/resourceDeepSearch';
+
+// Helper: consume SSE stream and extract text
+async function consumeSSEStream(stream: ReadableStream): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let result = '';
+  let done = false;
+  while (!done) {
+    const { value, done: d } = await reader.read();
+    done = d;
+    if (value) {
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split('\n\n')) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.substring(6));
+            if (data.type === 'ai_chunk') result += data.data;
+          } catch {}
+        }
+      }
+    }
+  }
+  return result;
+}
 
 export async function POST(req: Request) {
   let taskIdForError = '';
@@ -26,41 +51,12 @@ export async function POST(req: Request) {
 
     const fallbackPersona = 'You are Atlas, the Research Resource Specialist at 平方创想教育科技. You search the VisionSquare research materials database to find instruments, consumables and reagents, and generate structured procurement reports.';
 
-    // Call resource deep search tool
+    // Call resource deep search directly (no HTTP self-call to avoid deadlock)
     let toolResult = '';
     try {
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:6660';
-
-      const searchRes = await fetch(`${baseUrl}/api/tools/resource-deep-search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: task.instruction }),
-      });
-
-      if (searchRes.ok && searchRes.body) {
-        const reader = searchRes.body.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        while (!done) {
-          const { value, done: d } = await reader.read();
-          done = d;
-          if (value) {
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n\n');
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.substring(6));
-                  if (data.type === 'ai_chunk') toolResult += data.data;
-                  if (data.type === 'raw_data') toolResult += '\n\n[原始数据]\n' + JSON.stringify(data.data).slice(0, 2000);
-                } catch {}
-              }
-            }
-          }
-        }
-      }
+      const token = process.env.VISIONSQUARE_AUTH_BEARER;
+      const stream = await runResourceDeepSearchStream(task.instruction, undefined, undefined, token);
+      toolResult = await consumeSSEStream(stream);
     } catch (toolErr: any) {
       toolResult = `[工具调用失败: ${toolErr.message}]`;
     }

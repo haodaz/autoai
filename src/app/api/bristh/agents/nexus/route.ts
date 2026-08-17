@@ -3,6 +3,32 @@ import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import { buildAgentPrompt } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
+import { runTalentDeepSearchStream } from '@/lib/tools/talentDeepSearch';
+import { runPolicySearchStream } from '@/lib/tools/findPolicies';
+
+// Helper: consume SSE stream and extract text
+async function consumeSSEStream(stream: ReadableStream): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let result = '';
+  let done = false;
+  while (!done) {
+    const { value, done: d } = await reader.read();
+    done = d;
+    if (value) {
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split('\n\n')) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.substring(6));
+            if (data.type === 'ai_chunk') result += data.data;
+          } catch {}
+        }
+      }
+    }
+  }
+  return result;
+}
 
 export async function POST(req: Request) {
   let taskIdForError = '';
@@ -26,78 +52,26 @@ export async function POST(req: Request) {
 
     const fallbackPersona = `You are Nexus, the Industry-Research Transfer Specialist at 平方创想教育科技. You bridge academia and industry by analyzing research directions for industrial landing opportunities and recommending matching R&D teams for enterprise needs. You produce structured reports with multi-dimensional scoring.`;
 
-    // Call talent search and policy search tools in parallel to gather context
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:6660';
+    const instruction = task.instruction;
+    const token = process.env.VISIONSQUARE_AUTH_BEARER;
 
+    // Call talent search and policy search directly in parallel (no HTTP self-call)
     let talentData = '';
     let policyData = '';
 
-    // Extract search keywords from instruction
-    const instruction = task.instruction;
+    const [talentResult, policyResult] = await Promise.allSettled([
+      (async () => {
+        const stream = await runTalentDeepSearchStream(instruction.slice(0, 100), '');
+        return consumeSSEStream(stream);
+      })(),
+      (async () => {
+        const stream = await runPolicySearchStream(instruction.slice(0, 50), '', '', token);
+        return consumeSSEStream(stream);
+      })()
+    ]);
 
-    // Call talent deep search (extract person/field keywords)
-    try {
-      const talentRes = await fetch(`${baseUrl}/api/tools/talent-deep-search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: instruction.slice(0, 50) }),
-      });
-      if (talentRes.ok && talentRes.body) {
-        const reader = talentRes.body.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        while (!done) {
-          const { value, done: d } = await reader.read();
-          done = d;
-          if (value) {
-            const chunk = decoder.decode(value, { stream: true });
-            for (const line of chunk.split('\n\n')) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.substring(6));
-                  if (data.type === 'ai_chunk') talentData += data.data;
-                } catch {}
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      talentData = '[人才检索暂时不可用]';
-    }
-
-    // Call policy search
-    try {
-      const policyRes = await fetch(`${baseUrl}/api/tools/policy-search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: instruction.slice(0, 50), region: '', background: '' }),
-      });
-      if (policyRes.ok && policyRes.body) {
-        const reader = policyRes.body.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        while (!done) {
-          const { value, done: d } = await reader.read();
-          done = d;
-          if (value) {
-            const chunk = decoder.decode(value, { stream: true });
-            for (const line of chunk.split('\n\n')) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.substring(6));
-                  if (data.type === 'ai_chunk') policyData += data.data;
-                } catch {}
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      policyData = '[政策检索暂时不可用]';
-    }
+    talentData = talentResult.status === 'fulfilled' ? talentResult.value : '[人才检索暂时不可用]';
+    policyData = policyResult.status === 'fulfilled' ? policyResult.value : '[政策检索暂时不可用]';
 
     const toolContext = `
 ## 人才与科研数据（来自Jarvis人才检索引擎）

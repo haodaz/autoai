@@ -3,6 +3,31 @@ import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import { buildAgentPrompt } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
+import { runPolicySearchStream } from '@/lib/tools/findPolicies';
+
+// Helper: consume SSE stream and extract text
+async function consumeSSEStream(stream: ReadableStream): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let result = '';
+  let done = false;
+  while (!done) {
+    const { value, done: d } = await reader.read();
+    done = d;
+    if (value) {
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split('\n\n')) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.substring(6));
+            if (data.type === 'ai_chunk') result += data.data;
+          } catch {}
+        }
+      }
+    }
+  }
+  return result;
+}
 
 export async function POST(req: Request) {
   let taskIdForError = '';
@@ -26,49 +51,19 @@ export async function POST(req: Request) {
 
     const fallbackPersona = 'You are Nova, the Policy Intelligence Specialist at 平方创想教育科技. You search and analyze talent policies from 平方数据平台 and the internet to provide structured policy reports with eligibility assessments.';
 
-    // 1. Call policy search tool
+    // Call policy search directly (no HTTP self-call to avoid deadlock)
     let toolResult = '';
     try {
-      const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:6660';
-
-      const searchRes = await fetch(`${baseUrl}/api/tools/policy-search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: task.instruction }),
-      });
-
-      if (searchRes.ok && searchRes.body) {
-        const reader = searchRes.body.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        while (!done) {
-          const { value, done: d } = await reader.read();
-          done = d;
-          if (value) {
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n\n');
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.substring(6));
-                  if (data.type === 'ai_chunk') toolResult += data.data;
-                  if (data.type === 'raw_data') toolResult += '\n\n[原始数据]\n' + JSON.stringify(data.data).slice(0, 2000);
-                } catch {}
-              }
-            }
-          }
-        }
-      }
+      const token = process.env.VISIONSQUARE_AUTH_BEARER;
+      const stream = await runPolicySearchStream(task.instruction, '', '', token);
+      toolResult = await consumeSSEStream(stream);
     } catch (toolErr: any) {
       toolResult = `[工具调用失败: ${toolErr.message}]`;
     }
 
-    // 2. Generate final policy report
     const systemPrompt = await buildAgentPrompt('nova', task.instruction, task.context.rawContent, fallbackPersona, locale)
       + '\n\n## 工具检索结果\n' + (toolResult || '暂无检索结果')
-      + '\n\n请基于以上检索数据，生成结构化政策分析报告（Markdown格式）。包含：政策速览表、详细解读、适用人群分析、操作建议。';
+      + '\n\n请基于以上检索数据，生成结构化的政策分析报告（Markdown格式）。包含：政策清单、适用条件分析、申报建议、对比总结。';
 
     const { client, config } = await getModelClient();
     const response = await client.chat.completions.create(
@@ -81,7 +76,7 @@ export async function POST(req: Request) {
     const summary = summaryMatch ? summaryMatch[1].slice(0, 80) : resultMarkdown.slice(0, 80).replace(/[#*]/g, '').trim();
 
     const resultPayload = JSON.stringify({
-      summary: `📜 ${summary}`,
+      summary: `📋 ${summary}`,
       content: resultMarkdown
     });
 
