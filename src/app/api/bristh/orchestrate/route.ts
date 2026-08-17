@@ -110,6 +110,9 @@ ${langInstruction}`;
       let rawResponse = response.choices[0].message.content || '{"tasks":[]}';
       console.log('[Orchestrate] Raw AI response:', rawResponse.substring(0, 300));
       
+      // Remove DeepSeek <think> blocks
+      rawResponse = rawResponse.replace(/<think>[\s\S]*?<\/think>/g, '');
+      
       // Robust JSON extraction
       rawResponse = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
       try {
