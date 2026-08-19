@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
 import { runTalentDeepSearchStream } from '@/lib/tools/talentDeepSearch';
 
@@ -33,7 +33,7 @@ async function consumeSSEStream(stream: ReadableStream): Promise<string> {
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -50,6 +50,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = 'You are Jarvis, the Talent Intelligence Specialist at 平方创想教育科技. You use multi-source deep search (ORCID, Google Scholar, 平方数据平台, Wikipedia) to verify and profile academic talent.';
 
     // Call talent deep search directly (no HTTP self-call to avoid deadlock)
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
       toolResult = `[工具调用失败: ${toolErr.message}]`;
     }
 
-    const systemPrompt = await buildAgentPrompt('jarvis', task.instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('jarvis', task.instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + '\n\n## 工具检索结果\n' + (toolResult || '暂无检索结果')
       + '\n\n请基于以上检索数据，生成专业的人才画像分析报告（Markdown格式）。包含：基本信息、学术成果、工作经历、教育背景、综合评估。';
 

@@ -4,7 +4,7 @@ import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import PptxGenJS from 'pptxgenjs';
 import path from 'path';
 import fs from 'fs/promises';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
 
 // Allow up to 120s for PPT generation (GPT-4o JSON output can be slow)
@@ -13,7 +13,7 @@ export const maxDuration = 120;
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -30,9 +30,10 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = 'You are Edda, the Presentation Specialist at 平方创想教育科技. Transform text into structured slide presentations.';
     
-    const systemPrompt = await buildAgentPrompt('edda', task.instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('edda', task.instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + `\n\nOutput exactly in this JSON format:
 {
   "think": "Write your step-by-step thinking in Markdown here",

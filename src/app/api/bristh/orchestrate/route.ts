@@ -39,7 +39,7 @@ async function getSessionUserId(): Promise<string | null> {
 
 export async function POST(req: Request) {
   try {
-    const { source, rawContent, locale, approvalConfig } = await req.json();
+    const { source, rawContent, locale, approvalConfig, attachments } = await req.json();
 
     if (!rawContent) {
       return NextResponse.json({ error: 'Missing rawContent' }, { status: 400 });
@@ -55,10 +55,20 @@ export async function POST(req: Request) {
       data: {
         source: source || 'TEXT_PASTE',
         rawContent,
+        attachments: attachments?.length ? JSON.stringify(attachments) : null,
         modelUsed: modelConfig.name,
         userId,
       }
     });
+
+    // Build attachment context for Chief
+    let attachmentContext = '';
+    if (attachments?.length) {
+      const attList = attachments.map((a: any, i: number) =>
+        `[${i + 1}] id="${a.id}" | 文件名: ${a.originalName} | 类型: ${a.mimeType}\n    摘要: ${a.summary || '无摘要'}`
+      ).join('\n');
+      attachmentContext = `\n\n## 用户上传的附件\n${attList}\n\n【附件分配规则】如果任务需要参考附件，请在该任务的 attachmentIds 中列出对应的 id。如果是对文件本身进行操作（翻译、填写、提取），分配给 Kelly。`;
+    }
 
     // Load Chief's persona from config + capability dictionary
     const chiefConfig = await loadAgentConfig('chief');
@@ -80,9 +90,26 @@ ${capabilityDict}
 
 Output format: JSON object with a "tasks" array.
 Each task object must have:
-- "agent": The EXACT name of the agent (e.g. "Alice", "Bob")
+- "agent": The EXACT name of the agent (e.g. "Alice", "Bob", "Kelly")
 - "instruction": Specific, actionable instruction for this agent based on the input text.
-${langInstruction}`;
+- "phase": 1 | 2 | 3 — the execution stage (see phasing rules below). THIS IS CRITICAL.
+${attachments?.length ? '- "attachmentIds": (optional) Array of attachment IDs this agent needs.' : ''}
+
+【阶段编排规则 — 非常重要】
+系统会严格按 phase 顺序执行任务。同一 phase 内的任务并行执行，phase 1 全部完成后才会启动 phase 2，以此类推。
+前一阶段所有 Agent 的产出会自动注入到后续阶段 Agent 的上下文中。
+
+Phase 1 — 信息准备阶段: 文件解析、数据提取、信息结构化
+Phase 2 — 核心工作阶段: 方案撰写、PPT制作、审计分析、合同起草
+Phase 3 — 整合分发阶段: 邮件发送（Grace 始终在此阶段）、最终汇总
+
+关键规则:
+- 如果任务 B 需要任务 A 的产出才能高质量完成，A 必须在更早的 phase
+- 文件解析/提取类任务 → Phase 1
+- 基于解析结果的撰写/分析类任务 → Phase 2
+- Grace 始终 → Phase 3
+- 如果没有信息准备需求，可以所有任务都在 Phase 1
+${attachmentContext}${langInstruction}`;
 
     let tasksToCreate = [];
     let parsedJson = {};
@@ -104,7 +131,7 @@ ${langInstruction}`;
       const response = await client.chat.completions.create(
         buildCompletionParams(config, [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Input Context:\n\n${rawContent}` }
+          { role: 'user', content: `Input Context:\n\n${rawContent}${attachments?.length ? '\n\n[用户上传了 ' + attachments.length + ' 个附件，请参考附件列表进行分配]' : ''}` }
         ], { requireJson: true })
       );
       let rawResponse = response.choices[0].message.content || '{"tasks":[]}';
@@ -147,6 +174,8 @@ ${langInstruction}`;
             instruction: t.instruction,
             status: 'PENDING',
             requiresApproval: approvalSet.has(t.agent.toLowerCase()),
+            attachmentIds: t.attachmentIds?.length ? JSON.stringify(t.attachmentIds) : null,
+            phase: t.phase || 1,
           }
         })
       )

@@ -65,11 +65,11 @@ Current output payload:
 ${task.resultPayload}
 ---
 Read the user's feedback, reply directly, AND output the FULL updated content.
-
-You MUST output valid JSON. `;
+`;
+    let isMarkdownAgent = false;
 
     if (task.agent === 'Edda') {
-      systemPrompt += `Output format:
+      systemPrompt += `You MUST output valid JSON. Output format:
 {
   "reply": "Your conversational reply explaining changes.",
   "slides": [
@@ -83,17 +83,24 @@ You MUST output valid JSON. `;
 }
 Use the Slide[] element-level format. Each slide has backgroundColor and elements with x,y,width,height as percentages.`;
     } else if (task.agent === 'Bob') {
-      systemPrompt += `Output format:
+      systemPrompt += `You MUST output valid JSON. Output format:
 {
   "reply": "Your conversational reply explaining changes.",
   "meeting": { "subject": "...", "start": [YYYY,MM,DD,HH,mm], "duration": 60, "description": "..." }
 }`;
     } else {
-      systemPrompt += `Output format:
-{
-  "reply": "Your conversational reply explaining changes.",
-  "content": "The FULL revised Markdown content."
-}`;
+      // For markdown agents: use delimiter format (NOT JSON) to avoid parse failures
+      // when markdown content contains quotes, special chars etc.
+      systemPrompt += `Output format — use EXACTLY these delimiters:
+
+---REPLY---
+Your short conversational reply explaining what you changed (1-3 sentences).
+---CONTENT---
+The FULL revised Markdown content here. Do NOT wrap in JSON or code fences.
+
+Important: You MUST include both ---REPLY--- and ---CONTENT--- delimiters.
+Always output the complete updated document, not just the changed parts.`;
+      isMarkdownAgent = true;
     }
 
     const { client, config } = await getModelClient();
@@ -101,14 +108,29 @@ Use the Slide[] element-level format. Each slide has backgroundColor and element
       buildCompletionParams(config, [
         { role: 'system', content: systemPrompt },
         ...history.map((h: any) => ({ role: h.role, content: h.content }))
-      ], { requireJson: true })
+      ], isMarkdownAgent ? {} : { requireJson: true })
     );
 
-    const rawResponse = response.choices[0].message.content || '{}';
-    console.log('[Copilot] Raw AI response:', rawResponse.substring(0, 200));
-    const result = extractJSON(rawResponse);
+    const rawResponse = response.choices[0].message.content || '';
+    console.log('[Copilot] Raw AI response:', rawResponse.substring(0, 300));
     
-    history.push({ role: 'assistant', content: result.reply || 'Updated.' });
+    let reply = '';
+    let result: any = {};
+
+    if (isMarkdownAgent) {
+      // Parse delimiter-based response
+      const replyMatch = rawResponse.match(/---REPLY---\s*([\s\S]*?)\s*---CONTENT---/);
+      const contentMatch = rawResponse.match(/---CONTENT---\s*([\s\S]*)/);
+      reply = replyMatch ? replyMatch[1].trim() : '已更新文档。';
+      const newContent = contentMatch ? contentMatch[1].trim() : rawResponse.trim();
+      result = { reply, content: newContent };
+    } else {
+      // Parse JSON for structured agents (Edda, Bob)
+      result = extractJSON(rawResponse);
+      reply = result.reply || 'Updated.';
+    }
+    
+    history.push({ role: 'assistant', content: reply });
 
     let finalPayload = task.resultPayload;
 

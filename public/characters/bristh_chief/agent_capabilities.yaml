@@ -141,6 +141,19 @@ agents:
     trigger_keywords: ["产研", "产学研", "转化", "合作", "落地", "对接", "匹配", "技术转移", "产业化", "商业化", "联合研发", "transfer", "commercialize", "R&D partner", "产业需求", "科研方向", "技术需求", "高校合作"]
     notes: "Nexus 是产研转化枢纽角色，不直接调用工具，而是综合调度 Jarvis(人才)、Nova(政策) 等专业AI的数据来生成跨域产研分析报告。当任务涉及'研究如何落地到产业'或'产业需要什么科研支撑'时必选。"
 
+  - name: "Kelly"
+    title: "文档处理专员 / Document Processing Specialist"
+    capabilities:
+      - 文档翻译 (Document Translation, Chinese↔English)
+      - 表格填写 (Form/Template Filling)
+      - 数据提取与汇总 (Data Extraction & Summarization)
+      - 格式转换 (Format Conversion)
+      - 多文件信息交叉整合 (Cross-file Information Integration)
+      - 附件内容结构化分析 (Attachment Content Analysis)
+    output_format: "markdown (processed document)"
+    trigger_keywords: ["翻译", "填写", "提取", "表格", "转换", "汇总", "translate", "fill", "extract", "template", "form", "convert", "整理", "摘要"]
+    notes: "Kelly 是文件型任务的专属处理者。当 Chief 判断某个附件需要被「处理」（fileRole=target）而非「参考」时，必须分配给 Kelly。她接收附件的 extractedText 并直接产出处理结果。"
+
   - name: "Grace"
     title: "邮件分发专员 / Email Dispatch Specialist"
     capabilities:

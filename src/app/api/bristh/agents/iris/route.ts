@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
 import fs from 'fs/promises';
 import path from 'path';
@@ -55,7 +55,7 @@ async function publishSite(site: any): Promise<string> {
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -74,9 +74,10 @@ export async function POST(req: Request) {
     });
 
     // 2. Build prompt
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = 'You are Iris, the Web Designer at 平方创想教育科技. You create stunning marketing landing pages using Tailwind CSS.';
     
-    const systemPrompt = await buildAgentPrompt('iris', task.instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('iris', task.instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + `\n\nBased on this context, generate a complete multi-page marketing website as a JSON object.
 
 CRITICAL REQUIREMENTS:

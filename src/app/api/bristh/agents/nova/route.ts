@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
 import { runPolicySearchStream } from '@/lib/tools/findPolicies';
 
@@ -32,7 +32,7 @@ async function consumeSSEStream(stream: ReadableStream): Promise<string> {
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = 'You are Nova, the Policy Intelligence Specialist at 平方创想教育科技. You search and analyze talent policies from 平方数据平台 and the internet to provide structured policy reports with eligibility assessments.';
 
     // Call policy search directly (no HTTP self-call to avoid deadlock)
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
       toolResult = `[工具调用失败: ${toolErr.message}]`;
     }
 
-    const systemPrompt = await buildAgentPrompt('nova', task.instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('nova', task.instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + '\n\n## 工具检索结果\n' + (toolResult || '暂无检索结果')
       + '\n\n请基于以上检索数据，生成结构化的政策分析报告（Markdown格式）。包含：政策清单、适用条件分析、申报建议、对比总结。';
 

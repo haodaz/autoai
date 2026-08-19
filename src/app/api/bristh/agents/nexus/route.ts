@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
 import { runTalentDeepSearchStream } from '@/lib/tools/talentDeepSearch';
 import { runPolicySearchStream } from '@/lib/tools/findPolicies';
@@ -33,7 +33,7 @@ async function consumeSSEStream(stream: ReadableStream): Promise<string> {
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -50,6 +50,7 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = `You are Nexus, the Industry-Research Transfer Specialist at 平方创想教育科技. You bridge academia and industry by analyzing research directions for industrial landing opportunities and recommending matching R&D teams for enterprise needs. You produce structured reports with multi-dimensional scoring.`;
 
     const instruction = task.instruction;
@@ -81,7 +82,7 @@ ${talentData || '暂无人才检索结果'}
 ${policyData || '暂无政策检索结果'}
 `;
 
-    const systemPrompt = await buildAgentPrompt('nexus', instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('nexus', instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + '\n\n## 工具检索结果（请引用这些真实数据支撑你的分析）\n' + toolContext
       + '\n\n请基于用户需求和以上数据，生成结构化的产研转化分析报告（Markdown格式）。'
       + '\n\n报告必须包含：综合分析摘要（≥300字）、四维评分分析、推荐方向/匹配项、可操作建议、合作路线图、下一步行动。';

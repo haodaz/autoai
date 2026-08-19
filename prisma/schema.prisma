@@ -87,6 +87,7 @@ model TaskContext {
   id              String   @id @default(cuid())
   source          String
   rawContent      String
+  attachments     String?          // JSON: [{id, originalName, storagePath, mimeType, size, extractedText, summary}]
   parsedData      String?
   modelUsed       String?
   userId          String?
@@ -105,6 +106,8 @@ model Task {
   instruction      String
   status           String      @default("PENDING")
   requiresApproval Boolean     @default(false)
+  attachmentIds    String?     // JSON: ["att_xxx"] — Chief assigns which attachments this agent needs
+  phase            Int         @default(1) // Execution phase: 1=info prep, 2=core work, 3=integration
   resultPayload    String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt

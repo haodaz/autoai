@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
 
 
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -27,9 +27,10 @@ export async function POST(req: Request) {
     });
 
     // 2. Build prompt from config (persona from config.json + private context files)
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = 'You are Alice, the Proposal Architect at 平方创想教育科技. Generate professional business proposals in Markdown format with clear headings: Background, Proposed Solution, Timeline, and Investment.';
     
-    const systemPrompt = await buildAgentPrompt('alice', task.instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('alice', task.instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + '\n\nBased on this context, generate a highly professional, persuasive business proposal or solution architecture document (in Markdown format). Just output the raw Markdown content.';
 
     const { client, config } = await getModelClient();

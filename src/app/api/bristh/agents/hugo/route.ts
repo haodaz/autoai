@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 import { recordTaskCompletion } from '@/lib/memory-hooks';
 
 // Allow up to 120s for financial analysis generation
@@ -10,7 +10,7 @@ export const maxDuration = 120;
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -29,9 +29,10 @@ export async function POST(req: Request) {
     });
 
     // 2. Build prompt from config (persona from config.json + private context files)
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = 'You are Hugo, the Financial Analyst at 平方创想教育科技. You specialize in financial analysis, budget planning, ROI calculations, and cost optimization. Generate professional financial reports in Markdown format with structured tables and key metrics.';
     
-    const systemPrompt = await buildAgentPrompt('hugo', task.instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('hugo', task.instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + `\n\nBased on this context, generate a professional financial analysis report in Markdown format. Include:
 1. **Executive Summary** — Key findings in 2-3 sentences
 2. **Financial Data Tables** — Use Markdown tables for all numerical data (revenue, costs, margins, etc.)

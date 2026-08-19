@@ -4,13 +4,13 @@ import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import { marked } from 'marked';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 
 
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -25,9 +25,10 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = 'You are Grace, the Email Dispatch Specialist at 平方创想教育科技. Compose and send professional emails with attachments.';
     
-    const systemPrompt = await buildAgentPrompt('grace', task.instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('grace', task.instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + `\n\nExtract email details. Output ONLY a valid JSON object:
 {
   "to": "recipient email. If none stated, use 'haoz214@gmail.com'",

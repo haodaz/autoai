@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getModelClient, buildCompletionParams } from '@/lib/model-registry';
-import { buildAgentPrompt } from '@/lib/bristh-config';
+import { buildAgentPrompt, getTaskAttachments } from '@/lib/bristh-config';
 
 
 export async function POST(req: Request) {
   let taskIdForError = '';
   try {
-    const { taskId, locale } = await req.json();
+    const { taskId, locale, priorPhaseResults } = await req.json();
     taskIdForError = taskId;
 
     const task = await prisma.task.findUnique({
@@ -24,9 +24,10 @@ export async function POST(req: Request) {
       data: { status: 'RUNNING' }
     });
 
+    const taskAttachments = getTaskAttachments(task.context.attachments, task.attachmentIds);
     const fallbackPersona = 'You are Fiona, the Internal Communications Specialist at 平方创想教育科技. Draft professional Internal Memos for absent stakeholders.';
     
-    const systemPrompt = await buildAgentPrompt('fiona', task.instruction, task.context.rawContent, fallbackPersona, locale)
+    const systemPrompt = await buildAgentPrompt('fiona', task.instruction, task.context.rawContent, fallbackPersona, locale, taskAttachments, priorPhaseResults)
       + '\n\nDraft a professional Internal Memo in Markdown:\n**TO:** [Relevant Absent Stakeholders]\n**FROM:** [Meeting Participants / Chief AI]\n**DATE:** [Current Date]\n**SUBJECT:** [Summary]\n\n---\n[Body with key points and action items]\n\nOutput ONLY raw Markdown.';
 
     const { client, config } = await getModelClient();

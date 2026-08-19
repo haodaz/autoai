@@ -21,7 +21,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
   const router = useRouter();
   const { pendingDispatchTask, setPendingDispatchTask } = useWorkspace();
   const [status, setStatus] = useState<'idle' | 'analyzing' | 'dispatching' | 'completed' | 'failed'>('idle');
-  const [activeNodes, setActiveNodes] = useState<{agent: string, instruction: string, status: string, taskId: string, depth: number, summary?: string}[]>([]);
+  const [activeNodes, setActiveNodes] = useState<{agent: string, instruction: string, status: string, taskId: string, depth: number, summary?: string, hasAttachments?: boolean}[]>([]);
   const [currentTaskDisplay, setCurrentTaskDisplay] = useState(t('bristh.office.noTask'));
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -117,6 +117,7 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
         taskId: t.id,
         summary: (() => { try { return JSON.parse(t.resultPayload || '{}').summary || ''; } catch { return ''; } })(),
         requiresApproval: t.requiresApproval,
+        hasAttachments: !!t.attachmentIds,
       }));
       setActiveNodes(mappedNodes);
       setStatus('completed');
@@ -193,17 +194,8 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
       setStatus('dispatching');
       const assignedTasks = data.tasks || [];
       addLog('Chief', `Orchestration complete. Participating agents: ${assignedTasks.map((t:any) => t.agent).join(', ')}.`);
-      
-      // Dynamic depth calculation based on agent dependencies
-      const agentNames = assignedTasks.map((t: any) => t.agent.toLowerCase());
-      const hasHugo = agentNames.includes('hugo');
-      const hasEdda = agentNames.includes('edda');
-      const getDepth = (agent: string) => {
-        const a = agent.toLowerCase();
-        if (a === 'grace') return hasEdda && hasHugo ? 3 : 2;
-        if (a === 'edda' && hasHugo) return 2;
-        return 1;
-      };
+      // Use Chief's phase assignments (dynamic pipeline)
+      const PHASE_LABELS: Record<number, string> = { 1: '信息准备', 2: '核心工作', 3: '整合分发' };
 
       const initialActiveNodes = assignedTasks.map((t:any) => {
         const taskRecord = data.tasks.find((dbTask: any) => dbTask.agent === t.agent);
@@ -212,12 +204,16 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
           instruction: t.instruction,
           status: 'working',
           taskId: taskRecord?.id,
-          depth: getDepth(t.agent),
+          depth: taskRecord?.phase || t.phase || 1,
+          hasAttachments: !!taskRecord?.attachmentIds || !!t.attachmentIds?.length,
         };
       });
       setActiveNodes(initialActiveNodes);
 
-      const executeAgent = async (taskRecord: any) => {
+      // Collect results per phase for inter-phase data flow
+      const phaseResults: Record<number, { agent: string; summary: string; content: string }[]> = {};
+
+      const executeAgent = async (taskRecord: any, priorResults?: { agent: string; summary: string; content: string }[]) => {
         const agentName = taskRecord.agent;
         addLog(agentName, `Executing sub-task: ${taskRecord.instruction.substring(0, 40)}...`);
         try {
@@ -226,14 +222,14 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
            const agentRes = await fetch(agentEndpoint, {
              method: 'POST',
              headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({ taskId: taskRecord.id, locale: i18n.language })
+             body: JSON.stringify({ taskId: taskRecord.id, locale: i18n.language, priorPhaseResults: priorResults || [] })
            });
 
            if (!agentRes.ok) {
              if (agentRes.status === 404) {
                 addLog(agentName, `(Mock) Completed task successfully.`);
                 setActiveNodes(prev => prev.map(n => n.agent === agentName ? {...n, status: 'done'} : n));
-                return;
+                return null;
              }
              throw new Error(`Failed with status ${agentRes.status}`);
            }
@@ -248,32 +244,47 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
            }
 
            addLog(agentName, `✅ Completed. Output payload saved to asset DB.`);
-           // Extract summary for Kanban card display
+           // Extract summary and content for inter-phase data flow
            let summary = '';
+           let content = '';
            try {
              const payload = agentData.task?.resultPayload;
              if (payload) {
                const parsed = JSON.parse(payload);
                summary = parsed.summary || '';
+               content = parsed.content || '';
              }
            } catch { summary = ''; }
            setActiveNodes(prev => prev.map(n => n.agent === agentName ? {...n, status: 'done', summary} : n));
+           return { agent: agentName, summary, content };
         } catch (err: any) {
            addLog(agentName, `❌ Error: ${err.message}`);
            setActiveNodes(prev => prev.map(n => n.agent === agentName ? {...n, status: 'failed'} : n));
+           return null;
         }
       };
 
-      // Group tasks by depth and execute sequentially
-      const depthGroups = new Map<number, any[]>();
+      // Group tasks by phase (from Chief) and execute sequentially
+      const phaseGroups = new Map<number, any[]>();
       data.tasks.forEach((t: any) => {
-        const d = getDepth(t.agent);
-        depthGroups.set(d, [...(depthGroups.get(d) || []), t]);
+        const phase = t.phase || 1;
+        phaseGroups.set(phase, [...(phaseGroups.get(phase) || []), t]);
       });
-      for (const depth of [...depthGroups.keys()].sort()) {
-        const group = depthGroups.get(depth)!;
-        if (depth > 1) addLog('System', `Dependencies met. Starting stage ${depth}: ${group.map((t: any) => t.agent).join(', ')}...`);
-        await Promise.all(group.map((t: any) => executeAgent(t)));
+
+      // Collect all prior results across phases
+      let allPriorResults: { agent: string; summary: string; content: string }[] = [];
+
+      for (const phase of [...phaseGroups.keys()].sort()) {
+        const group = phaseGroups.get(phase)!;
+        const label = PHASE_LABELS[phase] || `Phase ${phase}`;
+        if (phase > 1) addLog('System', `⏩ Phase ${phase} (${label}): ${group.map((t: any) => t.agent).join(', ')} — 前序阶段产出已注入`);
+        
+        const results = await Promise.all(group.map((t: any) => executeAgent(t, allPriorResults)));
+        
+        // Collect this phase's results for next phase
+        const phaseOutput = results.filter(Boolean) as { agent: string; summary: string; content: string }[];
+        phaseResults[phase] = phaseOutput;
+        allPriorResults = [...allPriorResults, ...phaseOutput];
       }
 
       addLog('Chief', 'All sub-tasks reported back. Pipeline finished.');
@@ -295,27 +306,23 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
     addLog('System', 'Task confirmed. Executing pre-assigned pipeline.');
     addLog('Chief', `Dispatching ${preCreatedTasks.length} agents: ${preCreatedTasks.map((t: any) => t.agent).join(', ')}.`);
 
-    // Dynamic depth calculation based on agent dependencies
-    const agentNames2 = preCreatedTasks.map((t: any) => t.agent.toLowerCase());
-    const hasHugo2 = agentNames2.includes('hugo');
-    const hasEdda2 = agentNames2.includes('edda');
-    const getDepth2 = (agent: string) => {
-      const a = agent.toLowerCase();
-      if (a === 'grace') return hasEdda2 && hasHugo2 ? 3 : 2;
-      if (a === 'edda' && hasHugo2) return 2;
-      return 1;
-    };
+    // Use Chief's phase assignments (dynamic pipeline)
+    const PHASE_LABELS2: Record<number, string> = { 1: '信息准备', 2: '核心工作', 3: '整合分发' };
 
     const initialActiveNodes = preCreatedTasks.map((t: any) => ({
       agent: t.agent,
       instruction: t.instruction,
       status: 'working',
       taskId: t.id,
-      depth: getDepth2(t.agent),
+      depth: t.phase || 1,
+      hasAttachments: !!t.attachmentIds,
     }));
     setActiveNodes(initialActiveNodes);
 
-    const executeAgent = async (taskRecord: any) => {
+    // Collect results per phase for inter-phase data flow
+    const phaseResults2: Record<number, { agent: string; summary: string; content: string }[]> = {};
+
+    const executeAgent = async (taskRecord: any, priorResults?: { agent: string; summary: string; content: string }[]) => {
       const agentName = taskRecord.agent;
       addLog(agentName, `Executing sub-task: ${taskRecord.instruction.substring(0, 40)}...`);
       try {
@@ -323,14 +330,14 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
         const agentRes = await fetch(agentEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskId: taskRecord.id, locale: i18n.language })
+          body: JSON.stringify({ taskId: taskRecord.id, locale: i18n.language, priorPhaseResults: priorResults || [] })
         });
 
         if (!agentRes.ok) {
           if (agentRes.status === 404) {
             addLog(agentName, `(Mock) Completed task successfully.`);
             setActiveNodes(prev => prev.map(n => n.agent === agentName ? {...n, status: 'done'} : n));
-            return;
+            return null;
           }
           const errData = await agentRes.json().catch(() => ({}));
           throw new Error(errData.error || `Failed with status ${agentRes.status}`);
@@ -341,9 +348,10 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
 
         addLog(agentName, `✅ Completed. Output payload saved to asset DB.`);
         let summary = '';
+        let content = '';
         try {
           const payload = agentData.task?.resultPayload;
-          if (payload) { const parsed = JSON.parse(payload); summary = parsed.summary || ''; }
+          if (payload) { const parsed = JSON.parse(payload); summary = parsed.summary || ''; content = parsed.content || ''; }
         } catch { summary = ''; }
 
         // Check if this task requires approval
@@ -352,28 +360,37 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
           addLog(agentName, `🟡 需要人工审批确认才能继续。`);
         }
         setActiveNodes(prev => prev.map(n => n.agent === agentName ? {...n, status: finalStatus, summary} : n));
+        return { agent: agentName, summary, content };
       } catch (err: any) {
         addLog(agentName, `❌ Error: ${err.message}`);
         setActiveNodes(prev => prev.map(n => n.agent === agentName ? {...n, status: 'failed'} : n));
+        return null;
       }
     };
 
-    // Group tasks by depth and execute sequentially, respecting approval gates
-    const depthGroups2 = new Map<number, any[]>();
+    // Group tasks by phase and execute sequentially, respecting approval gates
+    const phaseGroups2 = new Map<number, any[]>();
     preCreatedTasks.forEach((t: any) => {
-      const d = getDepth2(t.agent);
-      depthGroups2.set(d, [...(depthGroups2.get(d) || []), t]);
+      const phase = t.phase || 1;
+      phaseGroups2.set(phase, [...(phaseGroups2.get(phase) || []), t]);
     });
-    const sortedDepths = [...depthGroups2.keys()].sort();
+    const sortedPhases = [...phaseGroups2.keys()].sort();
     let hasAwaitingApproval = false;
-    for (const depth of sortedDepths) {
-      const group = depthGroups2.get(depth)!;
+    let allPriorResults2: { agent: string; summary: string; content: string }[] = [];
+
+    for (const phase of sortedPhases) {
+      const group = phaseGroups2.get(phase)!;
       if (hasAwaitingApproval) {
-        addLog('System', `⏸️ Stage ${depth} (${group.map((t: any) => t.agent).join(', ')}) 等待审批完成后执行...`);
+        addLog('System', `⏸️ Phase ${phase} (${PHASE_LABELS2[phase] || `Phase ${phase}`}): ${group.map((t: any) => t.agent).join(', ')} 等待审批完成后执行...`);
         break;
       }
-      if (depth > 1) addLog('System', `Dependencies met. Starting stage ${depth}: ${group.map((t: any) => t.agent).join(', ')}...`);
-      await Promise.all(group.map((t: any) => executeAgent(t)));
+      if (phase > 1) addLog('System', `⏩ Phase ${phase} (${PHASE_LABELS2[phase] || `Phase ${phase}`}): ${group.map((t: any) => t.agent).join(', ')} — 前序阶段产出已注入`);
+      
+      const results = await Promise.all(group.map((t: any) => executeAgent(t, allPriorResults2)));
+      const phaseOutput = results.filter(Boolean) as { agent: string; summary: string; content: string }[];
+      phaseResults2[phase] = phaseOutput;
+      allPriorResults2 = [...allPriorResults2, ...phaseOutput];
+      
       hasAwaitingApproval = group.some((t: any) => t.requiresApproval);
     }
 
@@ -705,7 +722,40 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
                 </pre>
               </div>
             );
-          } else if (json.content) {
+          } else if (json.processedFiles && json.content) {
+             // Kelly: Document Processing output with source file tracking
+             return (
+               <div className="flex flex-col h-full">
+                 <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 shrink-0">
+                   <span className="text-xs font-bold text-gray-500">{json.summary}</span>
+                   <div className="flex gap-2">
+                     <button onClick={() => navigator.clipboard.writeText(json.content)}
+                       className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-[11px] font-bold flex items-center gap-1.5 hover:bg-gray-200">
+                       <Copy className="w-3 h-3" /> 复制
+                     </button>
+                     <button onClick={() => { const blob = new Blob([json.content], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'kelly_output.md'; a.click(); URL.revokeObjectURL(url); }}
+                       className="px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg text-[11px] font-bold flex items-center gap-1.5 hover:bg-teal-100">
+                       <Download className="w-3 h-3" /> 下载 .md
+                     </button>
+                   </div>
+                 </div>
+                 {/* Processed files badge bar */}
+                 <div className="px-4 py-2 bg-teal-50/50 border-b border-teal-100 flex items-center gap-2 flex-wrap shrink-0">
+                   <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wider">📎 源文件:</span>
+                   {json.processedFiles.map((f: any, i: number) => (
+                     <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-teal-200 rounded text-[10px] text-teal-800 font-medium">
+                       <FileText className="w-3 h-3 text-teal-500" />
+                       {f.name}
+                     </span>
+                   ))}
+                 </div>
+                 <div className="flex-1 overflow-y-auto p-6">
+                   <div className="prose prose-sm max-w-none prose-headings:text-teal-900 prose-a:text-teal-600"
+                     dangerouslySetInnerHTML={{ __html: marked.parse(json.content) }} />
+                 </div>
+               </div>
+             );
+           } else if (json.content) {
             // Markdown agents (Alice, David, Eric, Fiona, Grace)
             return (
               <div className="flex flex-col h-full">
@@ -870,7 +920,8 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
             { depth: 0, label: '编排', nodes: [{ agent: 'Chief', instruction: `分析意图 → 分派 ${activeNodes.length} 个任务`, status: status === 'completed' || status === 'dispatching' ? 'done' : 'working', taskId: '', depth: 0, summary: `参与: ${activeNodes.map(n => n.agent).join(', ')}` }] },
           ];
           for (let d = 1; d <= maxDepth; d++) {
-            columns.push({ depth: d, label: d === 1 ? '并发执行' : `阶段 ${d}`, nodes: depthMap.get(d) || [] });
+            const PHASE_LABEL_MAP: Record<number, string> = { 1: 'Phase 1 · 信息准备', 2: 'Phase 2 · 核心工作', 3: 'Phase 3 · 整合分发' };
+            columns.push({ depth: d, label: PHASE_LABEL_MAP[d] || `Phase ${d}`, nodes: depthMap.get(d) || [] });
           }
 
           const AGENT_ROLES: Record<string, string> = {};
@@ -932,7 +983,10 @@ function VirtualOfficeView({ onOpenPptCopilot, onOpenDocCopilot }: { onOpenPptCo
                                 <div className="w-6 h-6 rounded-lg bg-gray-200 flex items-center justify-center text-[9px] font-black text-gray-600 shrink-0">{node.agent[0]}</div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-bold text-gray-800 truncate">{node.agent}</p>
+                                <p className="text-[11px] font-bold text-gray-800 truncate">
+                                  {node.agent}
+                                  {node.hasAttachments && <span className="ml-1 text-[9px] text-blue-400" title="此任务关联附件">📎</span>}
+                                </p>
                               </div>
                               {isDone && <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[9px] shrink-0">✓</div>}
                               {isFailed && <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-[9px] shrink-0">✗</div>}
